@@ -1,0 +1,10 @@
+project_id = "speaker-draft"
+
+[api]
+enabled = false
+
+[db]
+major_version = 15
+
+[studio]
+enabled = false

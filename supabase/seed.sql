@@ -1,0 +1,1 @@
+-- No seed data is defined until a database schema is approved.
