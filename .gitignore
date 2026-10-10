@@ -18,3 +18,5 @@ Thumbs.db
 *.key
 .vscode/*
 !.vscode/extensions.json
+.pnpm-home/
+*.tsbuildinfo
