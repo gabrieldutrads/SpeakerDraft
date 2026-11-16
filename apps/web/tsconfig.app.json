@@ -1,1 +1,18 @@
-{"extends":"../../packages/config/tsconfig.base.json","compilerOptions":{"jsx":"react-jsx","lib":["ES2022","DOM","DOM.Iterable"],"types":["vite/client"]},"include":["src"]}
+{
+  "extends": "../../packages/config/tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@speaker-draft/core/*": ["../../packages/core/src/*"],
+      "@speaker-draft/data/*": ["../../packages/data/src/*"],
+      "@speaker-draft/design-tokens/*": ["../../packages/design-tokens/src/*"],
+      "@speaker-draft/i18n/*": ["../../packages/i18n/src/*"],
+      "@speaker-draft/db-types/*": ["../../packages/db-types/src/*"]
+    }
+  },
+  "include": ["src"]
+}

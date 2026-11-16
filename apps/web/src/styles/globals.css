@@ -1,0 +1,480 @@
+/* ==========================================================================
+   SpeakerDraft Web — Global Styles & CSS Reset
+   ========================================================================== */
+
+/* CSS Reset — Modern, minimal */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  color-scheme: light;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) {
+    color-scheme: dark;
+  }
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--sd-font-sans);
+  font-size: var(--sd-text-base);
+  line-height: var(--sd-line-normal);
+  background: var(--sd-background);
+  color: var(--sd-text-primary);
+  transition: background-color var(--sd-duration-normal) var(--sd-ease-default),
+              color var(--sd-duration-normal) var(--sd-ease-default);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Links */
+a {
+  color: var(--sd-primary);
+  text-decoration: none;
+  transition: color var(--sd-duration-fast) var(--sd-ease-default);
+}
+
+a:hover {
+  color: var(--sd-primary-hover);
+}
+
+a:focus-visible {
+  outline: 3px solid var(--sd-border-focus);
+  outline-offset: 2px;
+  border-radius: var(--sd-radius-sm);
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: var(--sd-font-semibold);
+  line-height: var(--sd-line-tight);
+  color: var(--sd-text-primary);
+}
+
+h1 { font-size: var(--sd-text-4xl); }
+h2 { font-size: var(--sd-text-3xl); }
+h3 { font-size: var(--sd-text-2xl); }
+h4 { font-size: var(--sd-text-xl); }
+h5 { font-size: var(--sd-text-lg); }
+h6 { font-size: var(--sd-text-base); }
+
+p {
+  margin-bottom: var(--sd-space-4);
+  line-height: var(--sd-line-relaxed);
+}
+
+small {
+  font-size: var(--sd-text-sm);
+  color: var(--sd-text-secondary);
+}
+
+/* Form elements */
+button, input, textarea, select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+input, textarea, select {
+  border: 1px solid var(--sd-border);
+  border-radius: var(--sd-radius-lg);
+  background: var(--sd-surface);
+  padding: var(--sd-space-3) var(--sd-space-4);
+  transition: border-color var(--sd-duration-fast), box-shadow var(--sd-duration-fast);
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--sd-border-focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sd-primary) 20%, transparent);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--sd-text-muted);
+}
+
+/* Selection */
+::selection {
+  background: color-mix(in srgb, var(--sd-accent) 30%, transparent);
+  color: var(--sd-text-primary);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--sd-surface-subtle);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--sd-border);
+  border-radius: var(--sd-radius-pill);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--sd-text-secondary);
+}
+
+/* Focus visible for all interactive elements */
+:focus-visible {
+  outline: 3px solid var(--sd-border-focus);
+  outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High contrast */
+@media (prefers-contrast: more) {
+  :root {
+    --sd-border: var(--sd-text-primary);
+    --sd-border-focus: var(--sd-accent);
+  }
+}
+
+/* Screen reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Skip link */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: var(--sd-space-4);
+  padding: var(--sd-space-2) var(--sd-space-4);
+  background: var(--sd-primary);
+  color: var(--sd-primary-foreground);
+  border-radius: var(--sd-radius-md);
+  z-index: 10000;
+  transition: top var(--sd-duration-fast) var(--sd-ease-out);
+}
+
+.skip-link:focus {
+  top: var(--sd-space-4);
+}
+
+/* Live region for announcements */
+.live-region {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ==========================================================================
+   Bible Reader Styles
+   ========================================================================== */
+
+:root {
+  --bible-font-size: 18px;
+  --bible-line-height: 32px;
+}
+
+/* Bible themes */
+[data-bible-theme="light"] .bible-content {
+  background: var(--sd-surface);
+  color: var(--sd-text-primary);
+}
+
+[data-bible-theme="dark"] .bible-content {
+  background: var(--sd-background);
+  color: var(--sd-text-primary);
+}
+
+[data-bible-theme="sepia"] .bible-content {
+  background: #fdf6e3;
+  color: #3c2e1a;
+}
+
+[data-bible-theme="sepia"] .verse-number {
+  color: #8b6914;
+}
+
+[data-bible-theme="sepia"] .verse-text {
+  color: #3c2e1a;
+}
+
+[data-bible-theme="sepia"] .parallel-translation {
+  border-color: #e8d5b7;
+}
+
+[data-bible-theme="sepia"] .parallel-translation .verse-text {
+  color: #5c4a2a;
+}
+
+/* Bible content container */
+.bible-content {
+  border-radius: var(--sd-radius-xl);
+  overflow: hidden;
+}
+
+.verses-container {
+  padding: var(--sd-space-6);
+}
+
+.verses-container.no-verse-numbers .verse-text {
+  padding-left: 0;
+}
+
+/* Verse rows */
+.verse-row {
+  display: flex;
+  gap: var(--sd-space-3);
+  padding: var(--sd-space-3) var(--sd-space-2);
+  border-radius: var(--sd-radius-md);
+  transition: background-color var(--sd-duration-fast);
+  position: relative;
+}
+
+.verse-row:hover {
+  background: color-mix(in srgb, var(--sd-primary) 5%, transparent);
+}
+
+.verse-row.selected {
+  background: color-mix(in srgb, var(--sd-primary) 10%, transparent);
+  outline: 2px solid var(--sd-primary);
+  outline-offset: -2px;
+}
+
+.verse-row.bookmarked::after {
+  content: '★';
+  position: absolute;
+  right: var(--sd-space-2);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.9em;
+  color: var(--sd-accent);
+  opacity: 0.7;
+}
+
+.verse-number {
+  flex-shrink: 0;
+  width: 2.5rem;
+  text-align: right;
+  font-size: 0.85em;
+  font-weight: var(--sd-font-semibold);
+  color: var(--sd-text-muted);
+  line-height: inherit;
+  user-select: none;
+  padding-top: 0.1em;
+}
+
+.verse-text {
+  flex: 1;
+  line-height: var(--bible-line-height);
+  word-wrap: break-word;
+}
+
+.verse-text mark {
+  background: color-mix(in srgb, var(--sd-accent) 30%, transparent);
+  padding: 0 0.2em;
+  border-radius: var(--sd-radius-sm);
+}
+
+/* Parallel translation */
+.parallel-translation {
+  background: color-mix(in srgb, var(--sd-primary) 3%, transparent);
+  border-radius: var(--sd-radius-lg);
+  padding: var(--sd-space-4);
+  margin-top: var(--sd-space-6);
+}
+
+.parallel-translation .verse-row {
+  padding: var(--sd-space-2) var(--sd-space-2);
+  font-size: 0.95em;
+}
+
+.parallel-translation .verse-number {
+  color: var(--sd-text-muted);
+  opacity: 0.7;
+}
+
+.parallel-translation .verse-text {
+  font-style: italic;
+  opacity: 0.85;
+}
+
+/* Verse actions popover */
+.verse-actions-popover {
+  pointer-events: none;
+}
+
+.verse-actions-popover > div {
+  pointer-events: auto;
+}
+
+.verse-context {
+  transition: all var(--sd-duration-fast);
+}
+
+.verse-context:hover {
+  background: color-mix(in srgb, var(--sd-primary) 5%, transparent);
+}
+
+/* Table of Contents */
+.bible-toc-panel .toc-book-group button {
+  transition: all var(--sd-duration-fast);
+}
+
+.bible-toc-panel .toc-book-group button:hover {
+  background: var(--sd-surface-hover);
+}
+
+.bible-toc-panel .toc-book-group button:focus-visible {
+  outline: 3px solid var(--sd-border-focus);
+  outline-offset: -3px;
+}
+
+/* Search results */
+.search-result-item {
+  transition: all var(--sd-duration-fast);
+}
+
+.search-result-item:hover {
+  background: var(--sd-surface-hover);
+}
+
+.search-result-item:focus-visible {
+  outline: 3px solid var(--sd-border-focus);
+  outline-offset: -3px;
+}
+
+/* Progress bar at top */
+.bible-progress-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 50;
+  background: transparent;
+}
+
+.bible-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--sd-primary), var(--sd-accent));
+  border-radius: 0 0 var(--sd-radius-full) 0;
+  transition: width 0.1s linear;
+}
+
+/* Mobile floating controls */
+.bible-mobile-nav {
+  position: fixed;
+  bottom: var(--sd-space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  gap: var(--sd-space-3);
+  pointer-events: none;
+}
+
+.bible-mobile-nav > * {
+  pointer-events: auto;
+}
+
+/* Settings sheet */
+.bible-settings-sheet {
+  animation: slideUp var(--sd-duration-normal) var(--sd-ease-out);
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Animation for verse highlighting */
+@keyframes verseHighlight {
+  0% { background: color-mix(in srgb, var(--sd-accent) 40%, transparent); }
+  100% { background: transparent; }
+}
+
+.verse-highlighted {
+  animation: verseHighlight 1s ease-out;
+}
+
+/* Print styles for preaching */
+@media print {
+  .bible-content {
+    max-width: none;
+    padding: 0;
+  }
+
+  .verse-row {
+    break-inside: avoid;
+    padding: var(--sd-space-2) 0;
+  }
+
+  .verse-number {
+    width: 2rem;
+  }
+
+  .chapter-nav,
+  .bible-controls,
+  .bible-mobile-nav,
+  .bible-settings-sheet {
+    display: none !important;
+  }
+}
+
+/* Focus styles for accessibility */
+.verse-row:focus-visible {
+  outline: 3px solid var(--sd-border-focus);
+  outline-offset: 2px;
+  border-radius: var(--sd-radius-md);
+}
+
+/* Reduced motion for verse animations */
+@media (prefers-reduced-motion: reduce) {
+  .verse-row {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

@@ -1,18 +1,18 @@
-import { demoWorkspace, type CalendarEvent, type Outline, type StudyNote, type WorkspaceData } from "@speaker-draft/core";
+import { type CalendarEvent, type Outline, type StudyNote, type WorkspaceData } from "@speaker-draft/core";
 
 const STORAGE_KEY = "speakerdraft.workspace.v1";
 
 function readWorkspace(): WorkspaceData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { outlines: [...demoWorkspace.outlines], notes: [...demoWorkspace.notes], events: [...demoWorkspace.events] };
+    if (!raw) return { outlines: [], notes: [], events: [] };
     const value: unknown = JSON.parse(raw);
-    if (typeof value !== "object" || value === null || !("outlines" in value) || !("notes" in value) || !("events" in value)) return { outlines: [...demoWorkspace.outlines], notes: [], events: [] };
+    if (typeof value !== "object" || value === null || !("outlines" in value) || !("notes" in value) || !("events" in value)) return { outlines: [], notes: [], events: [] };
     const workspace = value as WorkspaceData;
-    if (!Array.isArray(workspace.outlines) || !Array.isArray(workspace.notes) || !Array.isArray(workspace.events)) return { outlines: [...demoWorkspace.outlines], notes: [], events: [] };
+    if (!Array.isArray(workspace.outlines) || !Array.isArray(workspace.notes) || !Array.isArray(workspace.events)) return { outlines: [], notes: [], events: [] };
     return workspace;
   } catch {
-    return { outlines: [...demoWorkspace.outlines], notes: [], events: [] };
+    return { outlines: [], notes: [], events: [] };
   }
 }
 

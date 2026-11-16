@@ -20,6 +20,52 @@
   --shadow: 0 18px 40px rgba(20, 31, 43, 0.08);
 }
 
+/* Refined navy and gold identity */
+:root {
+  --primary: #18385f;
+  --primary-soft: #e8eef6;
+  --gold: #c69a45;
+  --gold-soft: #f7f0df;
+  --navy: #142d4d;
+  --navy-soft: #e8eef6;
+  --green: #2d6c73;
+  --green-soft: #e8f2f1;
+  --bg: #f5f7fa;
+  --bg-elevated: #fbfcfe;
+  --sidebar: #edf2f8;
+  --sidebar-strong: #e1e9f3;
+  --line: rgba(20, 45, 77, .11);
+  --text: #172a42;
+  --muted: #627187;
+  --shadow: 0 18px 44px rgba(20, 45, 77, .09);
+}
+
+.app { background: var(--bg); }
+.brand-mark { background: linear-gradient(145deg, #1c426e, #102744); box-shadow: 0 7px 18px rgba(20,45,77,.2); }
+.brand-mark span:nth-child(2) { background: #d6b15f; }
+.nav-item.active { color: #173b65; background: #e4ebf4; box-shadow: inset 3px 0 #c69a45; }
+.button.primary { background: linear-gradient(135deg, #1b426e, #142d4d); box-shadow: 0 8px 20px rgba(20,45,77,.18); }
+.button.primary:hover { background: #102744; }
+.eyebrow { color: #9a742c; }
+.continue-card { background: linear-gradient(115deg, #142d4d, #204a75); color: #fff; }
+.continue-card .eyebrow, .continue-card p { color: #d7e1ed; }
+.continue-icon { color: #e4c474; }
+.file-tile.gold, .quick-icon.gold { color: #8a6520; background: #f7f0df; }
+.file-tile.green, .quick-icon.green { color: #245b69; background: #e8f2f1; }
+.tag { color: #264f74; background: #e8eef6; }
+.progress span, .preach-progress span { background: linear-gradient(90deg, #d6b15f, #f1d990); }
+.mobile-nav { background: rgba(249,251,254,.94); border-color: rgba(20,45,77,.12); }
+.mobile-nav button.active { color: #173b65; }
+.mobile-create { background: linear-gradient(135deg, #c69a45, #dfba68) !important; color: #182b43 !important; }
+.mobile-drawer { background: rgba(17,39,67,.98); }
+.theme-options button.selected { border-color: rgba(198,154,69,.7); background: rgba(198,154,69,.1); }
+.settings-layout aside button.active { background: #e8eef6; color: #18385f; }
+.login-intro { background: radial-gradient(ellipse at 18% 82%, rgba(198,154,69,.2), transparent 42%), linear-gradient(145deg, #142d4d, #213f62); color: white; border-radius: 28px; }
+.login-intro p, .login-intro small { color: #d6e0ec; }
+.login-intro .eyebrow { color: #e3c679; }
+.mobile-quick-actions button span { background: #e8eef6; color: #18385f; }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid rgba(198,154,69,.65); outline-offset: 2px; }
+
 .app {
   --bg: #edf2f5;
   --bg-elevated: #f7fafb;

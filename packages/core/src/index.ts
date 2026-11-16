@@ -6,6 +6,7 @@ export * from './schemas/models';
 export * from './bible/types';
 export * from './bible/books';
 export * from './bible/reference-parser';
+export * from './bible/api';
 
 // Navigation & Routes
 export * from './navigation/routes';
