@@ -1,10 +1,6 @@
 import { findBibleBook } from './books';
 import type { ParsedBibleReference } from './types';
 
-/**
- * Formats a parsed Bible reference into canonical Portuguese representation.
- * E.g. "João 3:16", "1 Coríntios 13:4-8", "Salmos 23"
- */
 export function formatBibleReference(ref: {
   bookName: string;
   chapterStart: number;
@@ -30,28 +26,15 @@ export function formatBibleReference(ref: {
   return `${ref.bookName} ${ref.chapterStart}:${ref.verseStart}`;
 }
 
-/**
- * Regex for matching single Bible reference.
- * Group 1: Book name/prefix (e.g. "1 Coríntios", "Jo", "Gênesis")
- * Group 2: Chapter start
- * Group 3: Verse start (optional)
- * Group 4: Range separator or chapter/verse end (optional)
- * Group 5: Verse end or Chapter end (optional)
- */
-const BIBLE_REF_REGEX =
-  /(?:^|[^\wÀ-ÿ])((?:[1-3]\s*)?[A-Za-zÀ-ÿ]+(?:\s+[A-Za-zÀ-ÿ]+)?)\s+(\d{1,3})(?:(?::|\.)(\d{1,3}))?(?:\s*(?:[-–—]|,\s*|\s+a\s+)\s*(?:(\d{1,3})(?::|\.))?(\d{1,3}))?/gi;
+// Regex mais simples para achar UMA referência isolada
+const SINGLE_REF_REGEX =
+  /^((?:[1-3]\s*)?[A-Za-zÀ-ÿ]+(?:\s+[A-Za-zÀ-ÿ]+)?)\s+(\d{1,3})(?:(?::|\.)(\d{1,3}))?(?:\s*(?:[-–—]|,\s*|\s+a\s+)\s*(?:(\d{1,3})(?::|\.))?(\d{1,3}))?$/i;
 
-/**
- * Parses a single string containing a Bible reference.
- * E.g. "João 3:16", "1Co 13:4-8", "Sl 23"
- */
 export function parseBibleReference(input: string): ParsedBibleReference | null {
   if (!input || typeof input !== 'string') return null;
   const trimmed = input.trim();
 
-  // Try matching against the regex
-  BIBLE_REF_REGEX.lastIndex = 0;
-  const match = BIBLE_REF_REGEX.exec(' ' + trimmed);
+  const match = SINGLE_REF_REGEX.exec(trimmed);
   if (!match) return null;
 
   const rawBook = match[1]?.trim();
@@ -95,26 +78,31 @@ export function parseBibleReference(input: string): ParsedBibleReference | null 
   };
 }
 
-/**
- * Extracts all valid Bible references found within a larger text body.
- */
 export function extractBibleReferences(text: string): ParsedBibleReference[] {
   if (!text || typeof text !== 'string') return [];
 
   const results: ParsedBibleReference[] = [];
-  const regex = new RegExp(BIBLE_REF_REGEX.source, 'gi');
-  let match: RegExpExecArray | null;
-
-  while ((match = regex.exec(' ' + text)) !== null) {
-    const rawMatch = match[0].trim();
-    const parsed = parseBibleReference(rawMatch);
-    if (parsed) {
-      // Avoid duplicate consecutive identical matches
-      const exists = results.some(
-        (r) => r.canonical === parsed.canonical && Math.abs(regex.lastIndex - text.indexOf(rawMatch)) < 50
-      );
-      if (!exists) {
-        results.push(parsed);
+  
+  // Quebra o texto em palavras
+  const words = text.split(/\s+/);
+  
+  // Tenta juntar de 2 a 4 palavras para formar uma referência (ex: "João 3:16" ou "1 Coríntios 13:4-8")
+  for (let i = 0; i < words.length; i++) {
+    // Tenta combinações de 4, 3 e 2 palavras
+    for (let j = 4; j >= 2; j--) {
+      if (i + j <= words.length) {
+        const chunk = words.slice(i, i + j).join(' ').replace(/[.,;!?]$/, ''); // Remove pontuação do final
+        const parsed = parseBibleReference(chunk);
+        
+        if (parsed) {
+          // Evita duplicatas exatas
+          const exists = results.some((r) => r.canonical === parsed.canonical);
+          if (!exists) {
+            results.push(parsed);
+            i += j - 1; // Pula as palavras que já foram usadas nesta referência
+            break; // Vai para a próxima palavra
+          }
+        }
       }
     }
   }

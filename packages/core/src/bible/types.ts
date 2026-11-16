@@ -1,7 +1,7 @@
 export type Testament = 'OT' | 'NT';
 
 export interface BibleBook {
-  id: number; // 1 to 66
+  id: number;
   name: string;
   abbrev: string;
   testament: Testament;

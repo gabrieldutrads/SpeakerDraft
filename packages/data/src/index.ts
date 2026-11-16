@@ -1,5 +1,20 @@
+// ============================================================================
+// NOVA CAMADA DE DADOS (Supabase + Local Adapters)
+// ============================================================================
+import { LocalWorkspaceRepository } from './adapters/LocalWorkspaceRepository';
+import type { WorkspaceRepository } from './repositories/WorkspaceRepository';
 import { type CalendarEvent, type Outline, type StudyNote, type WorkspaceData } from "@speaker-draft/core";
 
+export const dataRepository: WorkspaceRepository = new LocalWorkspaceRepository();
+
+export * from './repositories/WorkspaceRepository';
+export * from './adapters/LocalWorkspaceRepository';
+export * from './adapters/SupabaseWorkspaceRepository';
+export * from './errors';
+
+// ============================================================================
+// LEGADO (Mantido temporariamente para o App.tsx não quebrar)
+// ============================================================================
 const STORAGE_KEY = "speakerdraft.workspace.v1";
 
 function readWorkspace(): WorkspaceData {

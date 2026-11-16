@@ -46,6 +46,7 @@ export type TranslationCode =
 
 export const TRANSLATIONS: Record<TranslationCode, { name: string; language: 'pt' | 'en' | 'es'; fullName: string }> = {
   'nvi': { name: 'NVI', language: 'pt', fullName: 'Nova Versão Internacional' },
+  'nvi-pt': { name: 'NVI-PT', language: 'pt', fullName: 'Nova Versão Internacional (Português)' },
   'ara': { name: 'ARA', language: 'pt', fullName: 'Almeida Revista e Atualizada' },
   'ntlh': { name: 'NTLH', language: 'pt', fullName: 'Nova Tradução na Linguagem de Hoje' },
   'acf': { name: 'ACF', language: 'pt', fullName: 'Almeida Corrigida Fiel' },
@@ -180,7 +181,7 @@ class BibleApiService {
   /**
    * Get passage using parsed reference
    */
-  async getPassage(ref: ParsedBibleReference, translation?: TranslationCode): Promise<BibleChapter | BibleVerse[]> {
+  async getPassage(ref: ParsedBibleReference, translation?: TranslationCode): Promise<BibleChapter | BibleVerse | BibleVerse[]> {
     if (ref.verseStart === undefined) {
       return this.getChapter(ref.bookId, ref.chapterStart, translation);
     }
