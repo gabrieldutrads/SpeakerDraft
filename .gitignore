@@ -3,9 +3,13 @@ node_modules/
 dist/
 build/
 .turbo/
+.vercel/
 .expo/
 web-build/
 coverage/
+.envrc
+supabase/.temp/
+supabase/.branches/
 *.log
 .env
 .env.*
@@ -20,3 +24,4 @@ Thumbs.db
 !.vscode/extensions.json
 .pnpm-home/
 *.tsbuildinfo
+SpeakerDraft.zip
