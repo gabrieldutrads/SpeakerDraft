@@ -1,0 +1,159 @@
+warning: in the working copy of 'supabase/migrations/20261122000000_fix_integrity_p1_p2_corrigida.sql', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/supabase/migrations/20261122000000_fix_integrity_p1_p2.sql b/supabase/migrations/20261122000000_fix_integrity_p1_p2_corrigida.sql[m
+[1mindex a409c91..df93346 100644[m
+[1m--- a/supabase/migrations/20261122000000_fix_integrity_p1_p2.sql[m
+[1m+++ b/supabase/migrations/20261122000000_fix_integrity_p1_p2_corrigida.sql[m
+[36m@@ -93,4 +93,206 @@[m [mbegin[m
+   join pg_attribute a on a.attrelid = v_confrelid and a.attnum = k.attnum;[m
+ [m
+   if v_source_cols <> v_expected_src then[m
+[31m-    raise exception 'documents_folder_owner_fk: colunas de origem inesperadas. Encontrado %, esperado %.',[m
+\ No newline at end of file[m
+[32m+[m[32m    raise exception 'documents_folder_owner_fk: colunas de origem inesperadas. Encontrado %, esperado %.',[m
+[32m+[m[32m      v_source_cols, v_expected_src;[m
+[32m+[m[32m  end if;[m
+[32m+[m
+[32m+[m[32m  if v_target_cols <> v_expected_tgt then[m
+[32m+[m[32m    raise exception 'documents_folder_owner_fk: colunas de destino inesperadas. Encontrado %, esperado %.',[m
+[32m+[m[32m      v_target_cols, v_expected_tgt;[m
+[32m+[m[32m  end if;[m
+[32m+[m[32mend $$;[m
+[32m+[m
+[32m+[m[32m-- 0.3 Validação estrutural de events_document_owner_fk[m
+[32m+[m[32mdo $$[m
+[32m+[m[32mdeclare[m
+[32m+[m[32m  v_conid          oid;[m
+[32m+[m[32m  v_contype        char;[m
+[32m+[m[32m  v_convalidated   boolean;[m
+[32m+[m[32m  v_confdeltype    char;[m
+[32m+[m[32m  v_confrelid      oid;[m
+[32m+[m[32m  v_conrelid       oid;[m
+[32m+[m[32m  v_confdelsetcols smallint[];[m
+[32m+[m[32m  v_source_cols    text[];[m
+[32m+[m[32m  v_target_cols    text[];[m
+[32m+[m[32m  v_expected_src   text[] := array['document_id', 'owner_id'];[m
+[32m+[m[32m  v_expected_tgt   text[] := array['id', 'owner_id'];[m
+[32m+[m[32mbegin[m
+[32m+[m[32m  select c.oid, c.contype, c.convalidated, c.confdeltype, c.confrelid, c.conrelid, c.confdelsetcols[m
+[32m+[m[32m    into v_conid, v_contype, v_convalidated, v_confdeltype, v_confrelid, v_conrelid, v_confdelsetcols[m
+[32m+[m[32m  from pg_constraint c[m
+[32m+[m[32m  join pg_class t on t.oid = c.conrelid[m
+[32m+[m[32m  join pg_namespace n on n.oid = t.relnamespace[m
+[32m+[m[32m  where c.conname = 'events_document_owner_fk'[m
+[32m+[m[32m    and n.nspname = 'public'[m
+[32m+[m[32m    and t.relname = 'events';[m
+[32m+[m
+[32m+[m[32m  if v_conid is null then[m
+[32m+[m[32m    raise exception 'events_document_owner_fk não encontrada em public.events.';[m
+[32m+[m[32m  end if;[m
+[32m+[m
+[32m+[m[32m  if v_contype <> 'f' then[m
+[32m+[m[32m    raise exception 'events_document_owner_fk não é uma FK. contype=%', v_contype;[m
+[32m+[m[32m  end if;[m
+[32m+[m
+[32m+[m[32m  if not v_convalidated then[m
+[32m+[m[32m    raise exception 'events_document_owner_fk não está validada.';[m
+[32m+[m[32m  end if;[m
+[32m+[m
+[32m+[m[32m  if v_confdeltype <> 'n' then[m
+[32m+[m[32m    raise exception 'events_document_owner_fk não é ON DELETE SET NULL. confdeltype=%', v_confdeltype;[m
+[32m+[m[32m  end if;[m
+[32m+[m
+[32m+[m[32m  if v_confdelsetcols is not null then[m
+[32m+[m[32m    raise exception 'events_document_owner_fk: esperado confdelsetcols IS NULL, encontrado %.', v_confdelsetcols;[m
+[32m+[m[32m  end if;[m
+[32m+[m
+[32m+[m[32m  if v_confrelid <> 'public.documents'::regclass then[m
+[32m+[m[32m    raise exception 'events_document_owner_fk: tabela de destino inesperada (OID %).', v_confrelid;[m
+[32m+[m[32m  end if;[m
+[32m+[m
+[32m+[m[32m  select array_agg(a.attname::text order by k.ord)[m
+[32m+[m[32m    into v_source_cols[m
+[32m+[m[32m  from unnest([m
+[32m+[m[32m    (select conkey from pg_constraint where oid = v_conid)[m
+[32m+[m[32m  ) with ordinality as k(attnum, ord)[m
+[32m+[m[32m  join pg_attribute a on a.attrelid = v_conrelid and a.attnum = k.attnum;[m
+[32m+[m
+[32m+[m[32m  select array_agg(a.attname::text order by k.ord)[m
+[32m+[m[32m    into v_target_cols[m
+[32m+[m[32m  from unnest([m
+[32m+[m[32m    (select confkey from pg_constraint where oid = v_conid)[m
+[32m+[m[32m  ) with ordinality as k(attnum, ord)[m
+[32m+[m[32m  join pg_attribute a on a.attrelid = v_confrelid and a.attnum = k.attnum;[m
+[32m+[m
+[32m+[m[32m  if v_source_cols <> v_expected_src then[m
+[32m+[m[32m    raise exception 'events_document_owner_fk: colunas de origem inesperadas. Encontrado %, esperado %.',[m
+[32m+[m[32m      v_source_cols, v_expected_src;[m
+[32m+[m[32m  end if;[m
+[32m+[m
+[32m+[m[32m  if v_target_cols <> v_expected_tgt then[m
+[32m+[m[32m    raise exception 'events_document_owner_fk: colunas de destino inesperadas. Encontrado %, esperado %.',[m
+[32m+[m[32m      v_target_cols, v_expected_tgt;[m
+[32m+[m[32m  end if;[m
+[32m+[m[32mend $$;[m
+[32m+[m
+[32m+[m[32m-- 0.4 Verificar se tags NÃO possui UNIQUE (id, owner_id)[m
+[32m+[m[32mdo $$[m
+[32m+[m[32mdeclare[m
+[32m+[m[32m  v_has_unique boolean;[m
+[32m+[m[32mbegin[m
+[32m+[m[32m  select exists ([m
+[32m+[m[32m    select 1 from pg_constraint c[m
+[32m+[m[32m    where c.conrelid = 'public.tags'::regclass[m
+[32m+[m[32m      and c.contype = 'u'[m
+[32m+[m[32m      and ([m
+[32m+[m[32m        select array_agg(a.attname::text order by k.ord)[m
+[32m+[m[32m        from unnest(c.conkey) with ordinality as k(attnum, ord)[m
+[32m+[m[32m        join pg_attribute a on a.attrelid = c.conrelid and a.attnum = k.attnum[m
+[32m+[m[32m      ) = array['id', 'owner_id'][m
+[32m+[m[32m  ) into v_has_unique;[m
+[32m+[m
+[32m+[m[32m  if v_has_unique then[m
+[32m+[m[32m    raise exception 'tags já possui UNIQUE (id, owner_id). Migration não deve recriá-la.';[m
+[32m+[m[32m  end if;[m
+[32m+[m[32mend $$;[m
+[32m+[m
+[32m+[m[32m-- 0.5 Verificar inconsistências em document_tags SEM MODIFICAR[m
+[32m+[m[32mdo $$[m
+[32m+[m[32mdeclare[m
+[32m+[m[32m  v_total       int;[m
+[32m+[m[32m  v_bad_doc     int;[m
+[32m+[m[32m  v_bad_tag     int;[m
+[32m+[m[32m  v_orphan_doc  int;[m
+[32m+[m[32m  v_orphan_tag  int;[m
+[32m+[m[32mbegin[m
+[32m+[m[32m  select count(*) into v_total from public.document_tags;[m
+[32m+[m
+[32m+[m[32m  select count(*) into v_bad_doc[m
+[32m+[m[32m  from public.document_tags dt[m
+[32m+[m[32m  join public.documents d on d.id = dt.document_id[m
+[32m+[m[32m  where d.owner_id <> dt.owner_id;[m
+[32m+[m
+[32m+[m[32m  select count(*) into v_bad_tag[m
+[32m+[m[32m  from public.document_tags dt[m
+[32m+[m[32m  join public.tags t on t.id = dt.tag_id[m
+[32m+[m[32m  where t.owner_id <> dt.owner_id;[m
+[32m+[m
+[32m+[m[32m  select count(*) into v_orphan_doc[m
+[32m+[m[32m  from public.document_tags dt[m
+[32m+[m[32m  left join public.documents d on d.id = dt.document_id[m
+[32m+[m[32m  where d.id is null;[m
+[32m+[m
+[32m+[m[32m  select count(*) into v_orphan_tag[m
+[32m+[m[32m  from public.document_tags dt[m
+[32m+[m[32m  left join public.tags t on t.id = dt.tag_id[m
+[32m+[m[32m  where t.id is null;[m
+[32m+[m
+[32m+[m[32m  if v_bad_doc > 0 or v_bad_tag > 0 or v_orphan_doc > 0 or v_orphan_tag > 0 then[m
+[32m+[m[32m    raise exception 'Inconsistências detectadas em document_tags (total=%, bad_doc=%, bad_tag=%, orphan_doc=%, orphan_tag=%). Corrija manualmente antes de reaplicar.',[m
+[32m+[m[32m      v_total, v_bad_doc, v_bad_tag, v_orphan_doc, v_orphan_tag;[m
+[32m+[m[32m  end if;[m
+[32m+[m[32mend $$;[m
+[32m+[m
+[32m+[m[32m-- ============================================================================[m
+[32m+[m[32m-- BLOCO 1 — CORREÇÃO DAS FKs P1[m
+[32m+[m[32m-- ============================================================================[m
+[32m+[m
+[32m+[m[32m-- 1.1 documents_folder_owner_fk[m
+[32m+[m[32malter table public.documents[m
+[32m+[m[32m  drop constraint docu

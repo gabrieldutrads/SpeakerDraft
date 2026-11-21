@@ -2,7 +2,7 @@
 
 [api]
 enabled = true
-port = 54321
+port = 55431
 schemas = ["public", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
@@ -11,7 +11,7 @@ max_rows = 1000
 enabled = false
 
 [db]
-port = 54322
+port = 55432
 shadow_port = 54320
 major_version = 15
 
@@ -24,16 +24,16 @@ ip_version = "IPv4"
 
 [studio]
 enabled = true
-port = 54323
+port = 55433
 api_url = "http://127.0.0.1"
 openai_api_key = ""
 
 # Após a modificação
 [local_smtp]
 enabled = true
-port = 54324
-smtp_port = 54325
-pop3_port = 54326
+port = 55434
+smtp_port = 55435
+pop3_port = 55436
 
 [storage]
 enabled = true
@@ -90,5 +90,6 @@ inspector_port = 8083
 
 [analytics]
 enabled = false
-port = 54327
+port = 55437
 backend = "postgres"
+
