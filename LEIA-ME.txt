@@ -1,0 +1,21 @@
+oPregador — Rodada de correção de idiomas (etapa 1)
+
+Correções aplicadas por aplicar_portugues.py:
+- Registra os namespaces já definidos em apps/web/src/lib/i18n.ts (bible, outlines, agenda, library, notes, search etc.), sem apagar traduções.
+- Mantém compatibilidade com chaves antigas e com chamadas equivocadas de t('bible.title') dentro do namespace bible.
+- Corrige os textos estáticos principais da sidebar e menus de usuário, sem substituir layout.tsx completo nem suas mudanças visuais.
+- Cria backups individuais .backup-AAAAMMDD-HHMMSS antes de gravar.
+
+INSTALAÇÃO
+1. Extraia o ZIP ou use aplicar_portugues.py.
+2. Abra PowerShell NA RAIZ de SpeakerDraft.
+3. Execute: python caminho\para\aplicar_portugues.py
+4. Execute: pnpm --filter "@speaker-draft/web" typecheck
+5. Execute: pnpm --filter "@speaker-draft/web" build
+6. Teste Painel, Esboços, Bíblia, Biblioteca, Agenda e Busca em temas claro e escuro.
+
+LIMITES:
+- Esta etapa não corrige os textos em inglês escritos diretamente nos componentes nem a fonte bíblica.
+- O erro da Bíblia não é simplesmente CORS. A API bible-api.com NÃO oferece NVI, ARA ou NTLH nas traduções documentadas. É preciso selecionar uma fonte licenciada adequada, sem apresentar outra versão como NVI.
+- Nenhum banco, credencial ou arquivo do Supabase é alterado.
+- A compilação precisa ser validada na cópia do usuário.
