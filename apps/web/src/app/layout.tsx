@@ -1,6 +1,5 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { Menubar } from 'primereact/menubar';
 import { Avatar } from 'primereact/avatar';
 import { Tooltip } from 'primereact/tooltip';
 import { Sidebar } from 'primereact/sidebar';
@@ -24,20 +23,20 @@ interface NavItem {
 }
 
 const mainNavigation: NavItem[] = [
-  { label: 'Dashboard', icon: '📊', path: '/' },
-  { label: 'Outlines', icon: '📝', path: '/outlines' },
-  { label: 'Bible', icon: '📖', path: '/bible' },
-  { label: 'Agenda', icon: '📅', path: '/agenda' },
-  { label: 'Library', icon: '📚', path: '/library' },
-  { label: 'Notes', icon: '📓', path: '/notes' },
+  { label: 'Dashboard', icon: 'pi pi-chart-bar', path: '/' },
+  { label: 'Outlines', icon: 'pi pi-file-edit', path: '/outlines' },
+  { label: 'Bible', icon: 'pi pi-book', path: '/bible' },
+  { label: 'Agenda', icon: 'pi pi-calendar', path: '/agenda' },
+  { label: 'Library', icon: 'pi pi-folder-open', path: '/library' },
+  { label: 'Notes', icon: 'pi pi-pencil', path: '/notes' },
 ];
 
 const settingsNavigation: NavItem[] = [
-  { label: 'Profile', icon: '👤', path: '/settings/profile' },
-  { label: 'Appearance', icon: '🎨', path: '/settings/appearance' },
-  { label: 'Bible', icon: '📖', path: '/settings/bible' },
-  { label: 'Data & Sync', icon: '☁️', path: '/settings/data' },
-  { label: 'Account', icon: '🔐', path: '/settings/account' },
+  { label: 'Profile', icon: 'pi pi-user', path: '/settings/profile' },
+  { label: 'Appearance', icon: 'pi pi-palette', path: '/settings/appearance' },
+  { label: 'Bible', icon: 'pi pi-book', path: '/settings/bible' },
+  { label: 'Data & Sync', icon: 'pi pi-cloud', path: '/settings/data' },
+  { label: 'Account', icon: 'pi pi-lock', path: '/settings/account' },
 ];
 
 /* ==========================================================================
@@ -49,6 +48,8 @@ interface SidebarContextValue {
   toggle: () => void;
   close: () => void;
   open: () => void;
+  collapsed: boolean;
+  toggleCollapsed: () => void;
 }
 
 const SidebarContext = createContext<SidebarContextValue | null>(null);
@@ -63,13 +64,15 @@ export function useSidebar() {
 
 function SidebarProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   const toggle = () => setIsOpen((prev) => !prev);
   const close = () => setIsOpen(false);
   const open = () => setIsOpen(true);
+  const toggleCollapsed = () => setCollapsed((prev) => !prev);
 
   return (
-    <SidebarContext.Provider value={{ isOpen, toggle, close, open }}>
+    <SidebarContext.Provider value={{ isOpen, toggle, close, open, collapsed, toggleCollapsed }}>
       {children}
     </SidebarContext.Provider>
   );
@@ -83,7 +86,6 @@ function MobileHeader() {
   const { isOpen, toggle } = useSidebar();
   const { theme, setTheme } = useThemeContext();
   const navigate = useAppNavigate();
-  const location = useLocation();
   const [appendTo, setAppendTo] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -94,7 +96,6 @@ function MobileHeader() {
     { label: 'Profile', icon: 'pi pi-user', command: () => navigate.goToSettings('settingsProfile') },
     { label: 'Settings', icon: 'pi pi-cog', command: () => navigate.goToSettings() },
     { separator: true },
-    { label: 'Sign Out', icon: 'pi pi-sign-out', command: () => navigate.goTo('/login') },
   ];
 
   const themeIcons = {
@@ -114,7 +115,7 @@ function MobileHeader() {
         aria-expanded={isOpen}
         aria-controls="mobile-sidebar"
       />
-      <h1 className="flex-1 text-lg font-semibold text-primary truncate ml-2">SpeakerDraft</h1>
+      <h1 className="flex-1 text-lg font-semibold text-primary truncate ml-2">oPregador</h1>
 
       <div className="flex items-center gap-2">
         <Tooltip content="Theme">
@@ -163,7 +164,7 @@ function MobileHeader() {
 function DesktopSidebar() {
   const location = useLocation();
   const navigate = useAppNavigate();
-  const [collapsed, setCollapsed] = useState(false);
+  const { collapsed, toggleCollapsed } = useSidebar();
 
   const handleNavClick = (path: string) => {
     navigate.goTo(path);
@@ -172,8 +173,7 @@ function DesktopSidebar() {
   return (
     <aside
       className={cn(
-        'fixed top-0 left-0 z-30 h-full transition-all duration-300 bg-sidebar border-r border-border hidden lg:flex flex-col',
-        collapsed ? 'w-16' : 'w-64'
+        'app-desktop-sidebar fixed top-0 left-0 z-30 h-full transition-all duration-300 bg-sidebar border-r border-border hidden lg:flex flex-col'
       )}
       aria-label="Main navigation"
     >
@@ -181,10 +181,10 @@ function DesktopSidebar() {
       <div className={cn('flex items-center gap-3 h-14 px-4 border-b border-border transition-all duration-300', collapsed && 'justify-center px-0')}>
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
-            <span className="text-primary-foreground text-lg" aria-hidden="true">📖</span>
+            <i className="pi pi-book text-primary-foreground" aria-hidden="true" />
           </div>
           {!collapsed && (
-            <span className="font-semibold text-lg text-primary truncate">SpeakerDraft</span>
+            <span className="font-semibold text-lg text-primary truncate">oPregador</span>
           )}
         </div>
       </div>
@@ -199,7 +199,7 @@ function DesktopSidebar() {
                 onClick={() => handleNavClick(item.path)}
                 className={({ isActive }) =>
                   cn(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                    'app-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                     'group relative overflow-hidden',
                     isActive
                       ? 'bg-primary text-primary-foreground shadow-sm'
@@ -208,7 +208,7 @@ function DesktopSidebar() {
                 }
                 aria-current={location.pathname === item.path || location.pathname.startsWith(item.path + '/') ? 'page' : undefined}
               >
-                <span className="text-lg flex-shrink-0" aria-hidden="true">{item.icon}</span>
+                <i className={cn(item.icon, "app-nav-icon")} aria-hidden="true" />
                 {!collapsed && <span className="truncate">{item.label}</span>}
                 {item.badge && !collapsed && (
                   <span className="ml-auto px-2 py-0.5 text-xs font-medium bg-primary-soft text-primary rounded-full">
@@ -236,7 +236,7 @@ function DesktopSidebar() {
                 onClick={() => handleNavClick(item.path)}
                 className={({ isActive }) =>
                   cn(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                    'app-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                     'group relative overflow-hidden',
                     isActive
                       ? 'bg-primary text-primary-foreground shadow-sm'
@@ -245,7 +245,7 @@ function DesktopSidebar() {
                 }
                 aria-current={location.pathname === item.path ? 'page' : undefined}
               >
-                <span className="text-lg flex-shrink-0" aria-hidden="true">{item.icon}</span>
+                <i className={cn(item.icon, "app-nav-icon")} aria-hidden="true" />
                 {!collapsed && <span className="truncate">{item.label}</span>}
                 {collapsed && (
                   <Tooltip content={item.label}>
@@ -261,7 +261,7 @@ function DesktopSidebar() {
       {/* Collapse Toggle */}
       <div className="p-3 border-t border-border">
         <Button
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={toggleCollapsed}
           icon={collapsed ? 'pi pi-chevron-right' : 'pi pi-chevron-left'}
           className="w-full justify-center"
           severity="secondary"
@@ -305,9 +305,9 @@ function MobileSidebar() {
         <div className="flex items-center justify-between h-14 px-4 border-b border-border">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground text-lg" aria-hidden="true">📖</span>
+              <i className="pi pi-book text-primary-foreground" aria-hidden="true" />
             </div>
-            <span className="font-semibold text-lg text-primary">SpeakerDraft</span>
+            <span className="font-semibold text-lg text-primary">oPregador</span>
           </div>
           <Button
             icon="pi pi-times"
@@ -328,7 +328,7 @@ function MobileSidebar() {
                   onClick={() => handleNavClick(item.path)}
                   className={({ isActive }) =>
                     cn(
-                      'flex items-center gap-3 px-3 py-3 rounded-lg text-base font-medium transition-colors',
+                      'app-nav-link flex items-center gap-3 px-3 py-3 rounded-lg text-base font-medium transition-colors',
                       isActive
                         ? 'bg-primary text-primary-foreground'
                         : 'text-secondary hover:text-primary hover:bg-surface-hover'
@@ -336,7 +336,7 @@ function MobileSidebar() {
                   }
                   aria-current={location.pathname === item.path || location.pathname.startsWith(item.path + '/') ? 'page' : undefined}
                 >
-                  <span className="text-xl" aria-hidden="true">{item.icon}</span>
+                  <i className={cn(item.icon, "app-nav-icon")} aria-hidden="true" />
                   <span>{item.label}</span>
                   {item.badge && (
                     <span className="ml-auto px-2 py-0.5 text-xs font-medium bg-primary-soft text-primary rounded-full">
@@ -356,7 +356,7 @@ function MobileSidebar() {
                   onClick={() => handleNavClick(item.path)}
                   className={({ isActive }) =>
                     cn(
-                      'flex items-center gap-3 px-3 py-3 rounded-lg text-base font-medium transition-colors block',
+                      'app-nav-link flex items-center gap-3 px-3 py-3 rounded-lg text-base font-medium transition-colors block',
                       isActive
                         ? 'bg-primary text-primary-foreground'
                         : 'text-secondary hover:text-primary hover:bg-surface-hover'
@@ -364,7 +364,7 @@ function MobileSidebar() {
                   }
                   aria-current={location.pathname === item.path ? 'page' : undefined}
                 >
-                  <span className="text-xl" aria-hidden="true">{item.icon}</span>
+                  <i className={cn(item.icon, "app-nav-icon")} aria-hidden="true" />
                   <span>{item.label}</span>
                 </NavLink>
               ))}
@@ -377,8 +377,8 @@ function MobileSidebar() {
           <div className="flex items-center gap-3 px-3">
             <Avatar label="User" size="normal" shape="circle" className="bg-primary-soft text-primary" />
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-primary truncate">John Doe</p>
-              <p className="text-xs text-muted truncate">john@example.com</p>
+              <p className="font-medium text-primary truncate">Meu perfil</p>
+              <p className="text-xs text-muted truncate">Configurações da conta</p>
             </div>
           </div>
         </div>
@@ -406,7 +406,6 @@ function DesktopTopbar() {
     { separator: true },
     { label: 'Keyboard Shortcuts', icon: 'pi pi-keyboard', command: () => navigate.goTo('/shortcuts') },
     { separator: true },
-    { label: 'Sign Out', icon: 'pi pi-sign-out', command: () => navigate.goTo('/login') },
   ];
 
   const themeIcons = {
@@ -416,69 +415,26 @@ function DesktopTopbar() {
   };
 
   return (
-    <header className="fixed top-0 left-64 right-0 z-30 h-14 bg-surface-elevated/95 backdrop-blur-sm border-b border-border lg:block hidden flex items-center justify-between px-4 gap-4 transition-all duration-300"
-      style={{ left: 'var(--sd-sidebar-width, 16rem)' }}
+    <header className="app-desktop-topbar fixed top-0 right-0 z-30 h-14 bg-surface-elevated/95 backdrop-blur-sm border-b border-border hidden items-center justify-between px-4 gap-4 transition-all duration-300"
     >
-      {/* Left: Search + Quick Actions */}
-      <div className="flex items-center gap-3 flex-1 max-w-md">
-        <div className="relative flex-1 hidden sm:block">
-          <Button
-            icon="pi pi-search"
-            onClick={() => navigate.goToSearch()}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted hover:text-primary p-1"
-            severity="secondary"
-            aria-label="Search (Cmd+K)"
-          />
-          <input
-            type="search"
-            placeholder="Search outlines, Bible, notes... (Cmd+K)"
-            className="w-full pl-10 pr-4 py-2 bg-surface-subtle border border-border rounded-lg text-sm placeholder:text-muted focus:border-focus focus:outline-none focus:ring-2 focus:ring-primary/20"
-            aria-label="Global search"
-          />
-        </div>
-      </div>
+      <button type="button" className="opg-search-trigger" onClick={() => navigate.goToSearch()} aria-label="Abrir pesquisa global">
+        <i className="pi pi-search" aria-hidden="true" />
+        <span>Pesquisar esboços, Bíblia e anotações...</span>
+        <kbd>Ctrl K</kbd>
+      </button>
 
-      {/* Right: Theme, Notifications, User */}
-      <div className="flex items-center gap-2">
-        {/* Theme Toggle */}
-        <Tooltip content="Toggle theme">
-          <Button
-            icon={themeIcons[theme]}
-            onClick={() => {
-              const themes: Array<'light' | 'dark' | 'system'> = ['light', 'dark', 'system'];
-              const currentIndex = themes.indexOf(theme);
-              setTheme(themes[(currentIndex + 1) % themes.length]);
-            }}
-            className="p-2 text-secondary hover:text-primary"
-            severity="secondary"
-            aria-label={`Current theme: ${theme}. Click to cycle.`}
-          />
-        </Tooltip>
-
-        {/* Notifications */}
-        <Tooltip content="Notifications">
-          <Button
-            icon="pi pi-bell"
-            className="p-2 text-secondary hover:text-primary relative"
-            severity="secondary"
-            aria-label="Notifications"
-          >
-            <span className="absolute top-1 right-1 w-2 h-2 bg-error rounded-full" aria-hidden="true" />
-          </Button>
-        </Tooltip>
-
-        {/* User Menu */}
-        <TieredMenu
-          model={userMenuItems}
-          popup
-          appendTo={appendTo}
-        >
-          <div className="flex items-center gap-2 pr-2">
-            <Avatar label="JD" size="normal" shape="circle" className="bg-primary-soft text-primary" />
-            <span className="hidden md:block text-sm font-medium text-primary">John Doe</span>
-            <span className="pi pi-chevron-down text-muted text-xs" aria-hidden="true" />
-          </div>
-        </TieredMenu>
+      <div className="opg-topbar-actions">
+        <button type="button" className="opg-topbar-icon" onClick={() => {
+          const themes: Array<'light' | 'dark' | 'system'> = ['light', 'dark', 'system'];
+          setTheme(themes[(themes.indexOf(theme) + 1) % themes.length]);
+        }} aria-label={`Tema atual: ${theme}. Alternar tema`} title="Alternar tema">
+          <i className={themeIcons[theme]} aria-hidden="true" />
+        </button>
+        <button type="button" className="opg-profile-trigger" onClick={() => navigate.goToSettings('settingsProfile')} title="Abrir perfil">
+          <i className="pi pi-user" aria-hidden="true" />
+          <span>Meu perfil</span>
+          <i className="pi pi-angle-right" aria-hidden="true" />
+        </button>
       </div>
     </header>
   );
@@ -488,10 +444,11 @@ function DesktopTopbar() {
    Main Layout
    ========================================================================== */
 
-export function Layout() {
+function LayoutContent() {
+  const { collapsed } = useSidebar();
+
   return (
-    <SidebarProvider>
-      <div className="min-h-screen bg-background">
+      <div className={cn("app-layout min-h-screen bg-background", collapsed && "app-layout--collapsed")}>
         {/* Mobile Header */}
         <MobileHeader />
 
@@ -507,8 +464,7 @@ export function Layout() {
         {/* Main Content */}
         <main
           id="main-content"
-          className="pt-14 lg:pt-0 lg:pl-64 min-h-screen transition-all duration-300"
-          style={{ paddingLeft: 'var(--sd-sidebar-width, 16rem)' }}
+          className="app-main min-h-screen transition-all duration-300"
           role="main"
         >
           <div className="p-4 lg:p-6">
@@ -521,6 +477,13 @@ export function Layout() {
           Skip to main content
         </a>
       </div>
+  );
+}
+
+export function Layout() {
+  return (
+    <SidebarProvider>
+      <LayoutContent />
     </SidebarProvider>
   );
 }

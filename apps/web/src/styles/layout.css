@@ -1,0 +1,167 @@
+/* oPregador — Layout responsivo. A largura é compartilhada entre menu, topbar e conteúdo. */
+.app-layout {
+  --sd-sidebar-width: 16rem;
+}
+.app-layout--collapsed {
+  --sd-sidebar-width: 4rem;
+}
+
+/* Mobile: sidebar desktop oculta; cabeçalho fixo e conteúdo abaixo dele. */
+.app-main {
+  min-width: 0;
+  padding-top: 3.5rem;
+  padding-left: 0;
+}
+
+@media (min-width: 1024px) {
+  .app-desktop-sidebar {
+    width: var(--sd-sidebar-width);
+  }
+
+  .app-desktop-topbar {
+    display: flex;
+    left: var(--sd-sidebar-width);
+    min-width: 0;
+  }
+
+  .app-main {
+    padding-top: 3.5rem;
+    padding-left: var(--sd-sidebar-width);
+  }
+}
+
+/* Evita que conteúdo longo empurre a largura do painel. */
+.app-main > div {
+  min-width: 0;
+}
+
+
+/* oPregador — visual refinado: escopo limitado ao shell e ao dashboard */
+.app-layout {
+  --opg-motion: cubic-bezier(.22, 1, .36, 1);
+}
+.app-desktop-sidebar {
+  background: var(--sd-sidebar, var(--sd-surface-elevated));
+  border-right: 1px solid var(--sd-border);
+  box-shadow: 6px 0 28px rgba(0, 0, 0, .075);
+  transition: width 280ms var(--opg-motion), box-shadow 280ms ease;
+}
+.app-desktop-topbar {
+  transition: left 280ms var(--opg-motion), background-color 250ms ease;
+}
+.app-main {
+  transition: padding-left 280ms var(--opg-motion);
+}
+.app-nav-link {
+  position: relative;
+  min-height: 38px;
+  border-radius: var(--sd-radius-lg);
+  transition: background-color 180ms ease, color 180ms ease, transform 200ms var(--opg-motion);
+}
+.app-nav-link:hover { transform: translateX(3px); }
+.app-nav-link:active { transform: scale(.985); }
+.app-nav-link:focus-visible { outline: 2px solid var(--sd-border-focus); outline-offset: 2px; }
+.app-nav-icon { display: inline-flex; flex: 0 0 1.25rem; width: 1.25rem; align-items: center; justify-content: center; font-size: 1rem; }
+.app-layout--collapsed .app-desktop-sidebar .app-nav-link { justify-content: center; padding-left: .4rem; padding-right: .4rem; }
+.app-layout--collapsed .app-desktop-sidebar .app-nav-icon { flex-basis: 1.25rem; }
+
+/* Dashboard: cards, ações e blocos de conteúdo */
+.dashboard-stats .card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--sd-border);
+  background: var(--sd-surface-elevated);
+  transition: transform 260ms var(--opg-motion), box-shadow 260ms ease, border-color 260ms ease;
+  animation: opg-rise 500ms var(--opg-motion) both;
+}
+.dashboard-stats .card:nth-child(2) { animation-delay: 65ms; }
+.dashboard-stats .card:nth-child(3) { animation-delay: 130ms; }
+.dashboard-stats .card:nth-child(4) { animation-delay: 195ms; }
+.dashboard-stats .card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--sd-accent), transparent);
+  opacity: 0;
+  transition: opacity 250ms ease;
+}
+.dashboard-stats .card:hover { transform: translateY(-5px); box-shadow: var(--sd-shadow-lg); border-color: var(--sd-accent); }
+.dashboard-stats .card:hover::before { opacity: .9; }
+.dashboard-stat-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  margin: 0 auto .8rem;
+  border-radius: 1rem;
+  color: var(--sd-primary);
+  background: var(--sd-primary-soft);
+  font-size: 1.35rem;
+  transition: transform 280ms var(--opg-motion);
+}
+.dashboard-stat-card:hover .dashboard-stat-icon { transform: translateY(-2px) scale(1.08); }
+.dashboard-stat-icon--success { color: var(--sd-success); background: var(--sd-success-bg); }
+.dashboard-stat-icon--accent { color: var(--sd-accent); background: var(--sd-accent-soft); }
+.dashboard-stat-icon--info { color: var(--sd-info); background: var(--sd-info-bg); }
+.dashboard-stat-value { font-variant-numeric: tabular-nums; }
+.dashboard-actions, .dashboard-sections .card { animation: opg-rise 520ms var(--opg-motion) both; }
+.dashboard-sections .card:nth-child(2) { animation-delay: 80ms; }
+.dashboard-sections .card:nth-child(3) { animation-delay: 160ms; }
+.dashboard-action-button { transition: transform 200ms var(--opg-motion), filter 200ms ease, box-shadow 200ms ease; }
+.dashboard-action-button:hover { transform: translateY(-2px); filter: brightness(1.08); }
+.dashboard-action-button:active { transform: scale(.98); }
+@keyframes opg-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 639px) {
+  .dashboard-stat-icon { width: 2.75rem; height: 2.75rem; font-size: 1.15rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-desktop-sidebar, .app-desktop-topbar, .app-main, .app-nav-link,
+  .dashboard-stats .card, .dashboard-stat-icon, .dashboard-actions,
+  .dashboard-sections .card, .dashboard-action-button {
+    animation: none !important;
+    transition: none !important;
+  }
+  .app-nav-link:hover, .dashboard-stats .card:hover,
+  .dashboard-stat-card:hover .dashboard-stat-icon, .dashboard-action-button:hover {
+    transform: none;
+  }
+}
+
+
+/* Rodada 2 — densidade, hierarquia e acabamento visual */
+.app-layout { --opg-gold: var(--sd-accent); }
+.app-desktop-sidebar { background: linear-gradient(180deg, var(--sd-surface-elevated), var(--sd-background)); }
+.app-desktop-sidebar .app-nav-link[aria-current="page"] { box-shadow: inset 3px 0 0 var(--opg-gold); }
+.app-desktop-sidebar .app-nav-link:not([aria-current="page"]):hover { background: var(--sd-surface-hover); }
+.app-desktop-topbar { gap: 1.5rem; padding-inline: 1.5rem; background: color-mix(in srgb, var(--sd-surface-elevated) 93%, transparent); }
+.opg-search-trigger { min-width: 0; width: min(100%, 32rem); height: 2.45rem; display: flex; align-items: center; gap: .85rem; padding: 0 .9rem; border: 1px solid var(--sd-border); border-radius: .75rem; background: var(--sd-surface-subtle); color: var(--sd-text-muted); text-align: left; transition: border-color .2s, background-color .2s, box-shadow .2s; }
+.opg-search-trigger span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; font-size: .85rem; }
+.opg-search-trigger kbd { font: inherit; font-size: .72rem; border: 1px solid var(--sd-border); padding: .15rem .35rem; border-radius: .35rem; white-space: nowrap; }
+.opg-search-trigger:hover, .opg-search-trigger:focus-visible { border-color: var(--sd-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--sd-accent) 10%, transparent); }
+.opg-topbar-actions { margin-left: auto; display: flex; align-items: center; gap: .7rem; flex-shrink: 0; }
+.opg-topbar-icon { width: 2.5rem; height: 2.5rem; border-radius: .75rem; display: grid; place-items: center; background: var(--sd-surface-subtle); border: 1px solid var(--sd-border); transition: background .2s, transform .2s; }
+.opg-topbar-icon:hover { background: var(--sd-surface-hover); transform: translateY(-1px); }
+.opg-profile-trigger { display: flex; align-items: center; gap: .65rem; height: 2.5rem; padding: 0 .8rem; border-radius: .75rem; background: var(--sd-surface-subtle); border: 1px solid var(--sd-border); font-size: .82rem; font-weight: 600; }
+.opg-profile-trigger:hover { border-color: var(--sd-accent); }
+.opg-profile-trigger .pi-user { display: grid; place-items: center; width: 1.65rem; height: 1.65rem; border-radius: .55rem; background: var(--sd-primary-soft); color: var(--sd-accent); }
+.app-main > div { max-width: 1580px; margin: 0 auto; }
+.dashboard-stats { gap: 1rem; }
+.dashboard-stats .dashboard-stat-card { border-radius: 1rem; }
+.dashboard-stats .dashboard-stat-card .card-body { padding: 1.2rem 1.3rem; }
+.opg-stat-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 4.4rem; }
+.opg-stat-copy { min-width: 0; text-align: left; display: flex; flex-direction: column; gap: .45rem; }
+.opg-stat-copy .dashboard-stat-value { line-height: 1; font-size: clamp(1.65rem, 2vw, 2rem); }
+.opg-stat-row .dashboard-stat-icon { margin: 0; flex-shrink: 0; width: 2.85rem; height: 2.85rem; border-radius: .8rem; font-size: 1.2rem; }
+.dashboard-actions, .dashboard-sections .card { border-radius: 1rem; overflow: hidden; }
+.dashboard-actions .card-header, .dashboard-sections .card-header { padding-block: .9rem; }
+.dashboard-actions .card-body { padding: 1rem 1.2rem; }
+.dashboard-sections .card-body { min-height: 10rem; }
+.dashboard-sections .card { transition: transform .2s, border-color .2s, box-shadow .2s; }
+.dashboard-sections .card:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--sd-accent) 35%, var(--sd-border)); }
+@media (max-width: 1100px) { .opg-profile-trigger span { display: none; } .opg-search-trigger kbd { display: none; } }
+@media (max-width: 1023px) { .app-main > div { padding: 1rem; } }
+@media (prefers-reduced-motion: reduce) { .opg-search-trigger, .opg-topbar-icon, .dashboard-sections .card { transition: none !important; } .opg-topbar-icon:hover, .dashboard-sections .card:hover { transform: none; } }

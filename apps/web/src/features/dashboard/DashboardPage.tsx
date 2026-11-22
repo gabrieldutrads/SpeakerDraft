@@ -37,36 +37,40 @@ export function DashboardPage() {
     .slice(0, 3);
 
   const stats = [
-    { label: t('stats.totalOutlines', 'Total Outlines'), value: outlines.length.toString(), icon: '📝', color: 'primary' },
-    { label: t('stats.totalNotes', 'Total Notes'), value: notes.length.toString(), icon: '📓', color: 'success' },
-    { label: t('stats.upcomingEvents', 'Upcoming Events'), value: upcomingEvents.length.toString(), icon: '📅', color: 'accent' },
-    { label: t('stats.totalLibrary', 'Library Items'), value: '0', icon: '📚', color: 'info' },
+    { label: 'Esboços', value: outlines.length.toString(), icon: 'pi pi-file-edit', color: 'primary' },
+    { label: 'Anotações', value: notes.length.toString(), icon: 'pi pi-pencil', color: 'success' },
+    { label: 'Próximos eventos', value: upcomingEvents.length.toString(), icon: 'pi pi-calendar', color: 'accent' },
+    { label: 'Biblioteca', value: '0', icon: 'pi pi-folder-open', color: 'info' },
   ];
 
   const quickActions = [
-    { label: t('newOutline', 'New Outline'), icon: 'pi pi-plus', action: () => navigate.goTo(routes.outlineNew), color: 'primary' },
-    { label: t('newEvent', 'New Event'), icon: 'pi pi-calendar-plus', action: () => navigate.goTo(routes.eventNew), color: 'success' },
-    { label: t('newNote', 'New Note'), icon: 'pi pi-file-o', action: () => navigate.goTo(routes.noteNew), color: 'accent' },
-    { label: t('uploadFile', 'Upload File'), icon: 'pi pi-upload', action: () => navigate.goTo(routes.libraryUpload), color: 'info' },
+    { label: 'Novo esboço', icon: 'pi pi-plus', action: () => navigate.goTo(routes.outlineNew), color: 'primary' },
+    { label: 'Novo evento', icon: 'pi pi-calendar-plus', action: () => navigate.goTo(routes.eventNew), color: 'success' },
+    { label: 'Nova anotação', icon: 'pi pi-file-o', action: () => navigate.goTo(routes.noteNew), color: 'accent' },
+    { label: 'Enviar arquivo', icon: 'pi pi-upload', action: () => navigate.goTo(routes.libraryUpload), color: 'info' },
   ];
 
   const isLoading = outlinesLoading || notesLoading || eventsLoading;
 
   return (
-    <PageLayout title={t('welcome', 'Welcome!', { name: 'User' })} description="Your preaching dashboard">
+    <PageLayout title={'Seu espaço de preparação'} description="Organize seus estudos, mensagens e compromissos em um só lugar.">
       {/* Stats Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+      <div className="dashboard-stats grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
         {stats.map((stat, i) => (
-          <Card key={i} className="text-center">
-            <div className="text-4xl mb-2" aria-hidden="true">{stat.icon}</div>
-            <div className="text-3xl font-bold text-primary mb-1">{isLoading ? '...' : stat.value}</div>
-            <div className="text-sm text-secondary">{stat.label}</div>
+          <Card key={i} className="dashboard-stat-card">
+            <div className="opg-stat-row">
+              <div className="opg-stat-copy">
+                <div className="text-sm text-secondary">{stat.label}</div>
+                <div className="dashboard-stat-value text-3xl font-bold text-primary">{isLoading ? '...' : stat.value}</div>
+              </div>
+              <div className={`dashboard-stat-icon dashboard-stat-icon--${stat.color}`} aria-hidden="true"><i className={stat.icon} /></div>
+            </div>
           </Card>
         ))}
       </div>
 
       {/* Quick Actions */}
-      <Card title="Quick Actions" className="mb-8">
+      <Card title="Acesso rápido" className="dashboard-actions mb-8">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {quickActions.map((action, i) => (
             <Button
@@ -74,7 +78,7 @@ export function DashboardPage() {
               label={action.label}
               icon={action.icon}
               onClick={action.action}
-              className="w-full justify-start gap-2"
+              className="dashboard-action-button w-full justify-start gap-2"
               severity={action.color as any}
             />
           ))}
@@ -82,8 +86,8 @@ export function DashboardPage() {
       </Card>
 
       {/* Recent Sections */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card title={t('recentOutlines', 'Recent Outlines')}>
+      <div className="dashboard-sections grid gap-6 lg:grid-cols-3">
+        <Card title={'Esboços recentes'}>
           {isLoading ? (
             <div className="space-y-3">
               <div className="skeleton h-12 w-full" />
@@ -91,7 +95,7 @@ export function DashboardPage() {
               <div className="skeleton h-12 w-full" />
             </div>
           ) : outlines.length === 0 ? (
-            <p className="text-secondary text-center py-8">{t('noOutlines', 'No outlines yet')}</p>
+            <p className="text-secondary text-center py-8">{'Você ainda não criou esboços.'}</p>
           ) : (
             <>
               <ul className="space-y-3">
@@ -113,7 +117,7 @@ export function DashboardPage() {
           )}
         </Card>
 
-        <Card title={t('upcomingEvents', 'Upcoming Events')}>
+        <Card title={'Próximos eventos'}>
           {isLoading ? (
             <div className="space-y-3">
               <div className="skeleton h-12 w-full" />
@@ -121,7 +125,7 @@ export function DashboardPage() {
               <div className="skeleton h-12 w-full" />
             </div>
           ) : upcomingEvents.length === 0 ? (
-            <p className="text-secondary text-center py-8">{t('noEvents', 'No events scheduled')}</p>
+            <p className="text-secondary text-center py-8">{'Nenhum evento agendado.'}</p>
           ) : (
             <>
               <ul className="space-y-3">
@@ -141,7 +145,7 @@ export function DashboardPage() {
           )}
         </Card>
 
-        <Card title={t('recentNotes', 'Recent Notes')}>
+        <Card title={'Anotações recentes'}>
           {isLoading ? (
             <div className="space-y-3">
               <div className="skeleton h-12 w-full" />
@@ -149,7 +153,7 @@ export function DashboardPage() {
               <div className="skeleton h-12 w-full" />
             </div>
           ) : notes.length === 0 ? (
-            <p className="text-secondary text-center py-8">{t('noNotes', 'No notes yet')}</p>
+            <p className="text-secondary text-center py-8">{'Nenhuma anotação ainda.'}</p>
           ) : (
             <>
               <ul className="space-y-3">

@@ -1,193 +1,79 @@
-import { PageLayout, Card } from '@/app/layout';
-import { Button } from 'primereact/button';
-import { DataTable } from 'primereact/datatable';
-import { Column } from 'primereact/column';
+import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
-import { routes } from '@/app/router';
-import { useAppNavigate } from '@/app/router';
+import { useAppNavigate, routes } from '@/app/router';
 import { getRepositories, queryKeys } from '@/lib/repositories';
-import { Tooltip } from 'primereact/tooltip';
+import type { Outline } from '@speaker-draft/core';
+import './outlines-premium.css';
+
+const dateLabel = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Sem data' : date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+};
 
 export function OutlinesListPage() {
-  const { t } = useTranslation('outlines');
   const navigate = useAppNavigate();
   const queryClient = useQueryClient();
   const repos = getRepositories();
-
-  // Fetch outlines
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<'all' | 'ready' | 'draft'>('all');
+  const [view, setView] = useState<'grid' | 'list'>('grid');
+  const [sort, setSort] = useState<'recent' | 'title'>('recent');
+  const [deleteTarget, setDeleteTarget] = useState<Outline | null>(null);
   const { data: outlines = [], isLoading, error } = useQuery({
     queryKey: queryKeys.outlines,
     queryFn: () => repos.outlines.getAll(),
     staleTime: 1000 * 60 * 5,
   });
-
-  // Delete mutation
-  const deleteMutation = useMutation({
+  const deletion = useMutation({
     mutationFn: (id: string) => repos.outlines.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.outlines });
-    },
+    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: queryKeys.outlines }); setDeleteTarget(null); },
   });
+  const visible = useMemo(() => {
+    const term = search.trim().toLocaleLowerCase('pt-BR');
+    return outlines.filter(item => (filter === 'all' || item.status === filter) &&
+      (!term || [item.title, item.reference, item.category].some(value => (value ?? '').toLocaleLowerCase('pt-BR').includes(term))))
+      .sort((a, b) => sort === 'title' ? a.title.localeCompare(b.title, 'pt-BR') : new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  }, [outlines, filter, search, sort]);
+  const ready = outlines.filter(item => item.status === 'ready').length;
+  const openEditor = (item: Outline) => navigate.goToOutlineEdit(item.id);
 
-  const handleDelete = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (confirm(t('confirmDelete', 'Are you sure you want to delete this outline?'))) {
-      deleteMutation.mutate(id);
-    }
-  };
-
-  const handleRowClick = (outline: any) => {
-    navigate.goToOutlineEdit(outline.id);
-  };
-
-  const statusBadge = (status: string) => (
-    <span className={`px-2 py-0.5 text-xs rounded-full ${status === 'ready' ? 'bg-success-bg text-success' : 'bg-warning-bg text-warning'}`}>
-      {status === 'ready' ? t('status.ready', 'Ready') : t('status.draft', 'Draft')}
-    </span>
-  );
-
-  // Column body renderers for PrimeReact DataTable
-  const titleBody = (data: any) => <div className="font-medium text-primary">{data.title}</div>;
-
-  const statusBody = (data: any) => statusBadge(data.status);
-
-  const updatedAtBody = (data: any) => (
-    <span className="text-secondary text-sm">{new Date(data.updatedAt).toLocaleDateString()}</span>
-  );
-
-  const actionsBody = (data: any) => (
-    <div className="flex gap-1">
-      <Button
-        icon="pi pi-eye"
-        severity="secondary"
-        rounded
-        className="p-2"
-        onClick={(e) => { e.stopPropagation(); navigate.goToOutlinePreview(data.id); }}
-        aria-label={t('preview', 'Preview')}
-      >
-        <Tooltip>{t('preview', 'Preview')}</Tooltip>
-      </Button>
-      <Button
-        icon="pi pi-trash"
-        severity="danger"
-        rounded
-        className="p-2"
-        onClick={(e) => handleDelete(data.id, e)}
-        aria-label={t('delete', 'Delete')}
-      >
-        <Tooltip>{t('delete', 'Delete')}</Tooltip>
-      </Button>
-    </div>
-  );
-
-  return (
-    <PageLayout
-      title={t('title', 'Outlines')}
-      description="Manage your sermon outlines"
-      actions={<Button label={t('new', 'New Outline')} icon="pi pi-plus" onClick={() => navigate.goTo(routes.outlineNew)} />}
-    >
-      <Card>
-        {isLoading ? (
-          <div className="space-y-3">
-            <div className="skeleton h-12 w-full" />
-            <div className="skeleton h-12 w-full" />
-            <div className="skeleton h-12 w-full" />
-          </div>
-        ) : error ? (
-          <div className="text-center py-8">
-            <div className="text-error text-4xl mb-4">⚠️</div>
-            <p className="text-secondary">{t('errorLoading', 'Failed to load outlines')}</p>
-          </div>
-        ) : outlines.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4" aria-hidden="true">📝</div>
-            <h3 className="text-xl font-semibold text-primary mb-2">{t('noOutlines', 'No outlines yet')}</h3>
-            <p className="text-secondary mb-6">{t('noOutlinesDesc', 'Create your first sermon outline to get started.')}</p>
-            <Button label={t('new', 'Create Your First Outline')} icon="pi pi-plus" onClick={() => navigate.goTo(routes.outlineNew)} size="large" />
-          </div>
-        ) : (
-          <DataTable
-            value={outlines}
-            responsiveLayout="scroll"
-            className="w-full"
-            dataKey="id"
-            rowHover
-            onRowClick={handleRowClick}
-          >
-            <Column field="title" header={t('title', 'Title')} style={{ minWidth: '200px' }} body={titleBody} />
-            <Column field="reference" header={t('reference', 'Reference')} style={{ minWidth: '150px' }} />
-            <Column field="category" header={t('category', 'Category')} style={{ minWidth: '120px' }} />
-            <Column field="status" header={t('status', 'Status')} style={{ minWidth: '100px' }} body={statusBody} />
-            <Column field="updatedAt" header={t('updated', 'Updated')} style={{ minWidth: '150px' }} body={updatedAtBody} />
-            <Column header={t('actions', 'Actions')} style={{ minWidth: '100px' }} body={actionsBody} />
-          </DataTable>
-        )}
-      </Card>
-    </PageLayout>
-  );
-}
-
-export function OutlineEditorPage() {
-  const { t } = useTranslation('outlines');
-  const navigate = useAppNavigate();
-
-  return (
-    <PageLayout
-      title={t('edit', 'Edit Outline')}
-      description="Write and structure your sermon"
-      actions={<Button label={t('preview', 'Preview')} icon="pi pi-eye" severity="secondary" className="p-2" onClick={() => navigate.goTo(routes.outlinePreview)} />}
-    >
-      <Card>
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4" aria-hidden="true">✏️</div>
-          <h3 className="text-xl font-semibold text-primary mb-2">Outline Editor</h3>
-          <p className="text-secondary mb-6">TipTap block editor coming soon.</p>
-          <Button label={t('back', 'Back to Outlines')} icon="pi pi-arrow-left" severity="secondary" onClick={() => navigate.goTo(routes.outlines)} />
+  return <main className="op-hub">
+    <header className="op-hub-hero">
+      <div><div className="op-eyebrow"><i className="pi pi-sparkles" aria-hidden="true" /> SUA CENTRAL DE MENSAGENS</div>
+        <h1>Meus esboços<span className="op-title-dot">.</span></h1>
+        <p>Ideias, estudos e mensagens organizados para cada momento do seu ministério.</p>
+      </div>
+      <button className="op-primary-action" onClick={() => navigate.goTo(routes.outlineNew)}><i className="pi pi-plus" /> Novo esboço</button>
+    </header>
+    <section className="op-hub-metrics" aria-label="Resumo dos esboços">
+      <div className="op-metric"><span className="op-metric-icon"><i className="pi pi-file-edit" /></span><div><small>Total de esboços</small><strong>{outlines.length}</strong></div></div>
+      <div className="op-metric"><span className="op-metric-icon"><i className="pi pi-check-circle" /></span><div><small>Mensagens prontas</small><strong>{ready}</strong></div></div>
+      <div className="op-metric"><span className="op-metric-icon"><i className="pi pi-pencil" /></span><div><small>Em preparação</small><strong>{outlines.length - ready}</strong></div></div>
+    </section>
+    <section className="op-hub-panel">
+      <div className="op-hub-panel-heading"><div><h2>Biblioteca de esboços</h2><p>Encontre e continue suas mensagens.</p></div><span className="op-results-count">{visible.length} {visible.length === 1 ? 'resultado' : 'resultados'}</span></div>
+      <div className="op-hub-filters">
+        <label className="op-search"><i className="pi pi-search" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Pesquisar por título, passagem ou categoria..." aria-label="Pesquisar esboços" /></label>
+        <div className="op-filter-chips" aria-label="Filtrar por situação">
+          {([['all', 'Todos'], ['ready', 'Prontos'], ['draft', 'Rascunhos']] as const).map(([value, label]) => <button key={value} className={filter === value ? 'op-chip selected' : 'op-chip'} onClick={() => setFilter(value)} aria-pressed={filter === value}>{label}</button>)}
         </div>
-      </Card>
-    </PageLayout>
-  );
-}
-
-export function OutlinePreachingPage() {
-  const { t } = useTranslation('preaching');
-  const navigate = useAppNavigate();
-
-  return (
-    <PageLayout
-      title={t('title', 'Preaching Mode')}
-      description="Immersive preaching experience"
-    >
-      <Card>
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4" aria-hidden="true">🎤</div>
-          <h3 className="text-xl font-semibold text-primary mb-2">{t('title', 'Preaching Mode')}</h3>
-          <p className="text-secondary mb-6">Immersive reader with timer and keyboard navigation coming soon.</p>
-          <Button label={t('exitPreaching', 'Exit')} icon="pi pi-times" severity="secondary" onClick={() => navigate.goTo(routes.outlines)} />
-        </div>
-      </Card>
-    </PageLayout>
-  );
-}
-
-export function OutlinePreviewPage() {
-  const { t } = useTranslation('outlines');
-  const navigate = useAppNavigate();
-
-  return (
-    <PageLayout
-      title={t('preview', 'Preview Outline')}
-      description="See how your outline will look when preaching"
-    >
-      <Card>
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4" aria-hidden="true">👁️</div>
-          <h3 className="text-xl font-semibold text-primary mb-2">Preview</h3>
-          <p className="text-secondary mb-6">Print preview and export options coming soon.</p>
-          <Button label={t('back', 'Back to Editor')} icon="pi pi-arrow-left" severity="secondary" onClick={() => navigate.goBack()} />
-        </div>
-      </Card>
-    </PageLayout>
-  );
+        <label className="op-sort"><span className="sr-only">Ordenação</span><select value={sort} onChange={e => setSort(e.target.value as 'recent' | 'title')}><option value="recent">Mais recentes</option><option value="title">Título A–Z</option></select></label>
+        <div className="op-view-switch" role="group" aria-label="Formato de exibição"><button aria-label="Visualizar em cartões" aria-pressed={view === 'grid'} className={view === 'grid' ? 'active' : ''} onClick={() => setView('grid')}><i className="pi pi-th-large" /></button><button aria-label="Visualizar em lista" aria-pressed={view === 'list'} className={view === 'list' ? 'active' : ''} onClick={() => setView('list')}><i className="pi pi-list" /></button></div>
+      </div>
+      {isLoading ? <div className="op-empty"><i className="pi pi-spin pi-spinner" /><h3>Carregando seus esboços...</h3></div>
+      : error ? <div className="op-empty"><i className="pi pi-exclamation-triangle" /><h3>Não foi possível carregar seus esboços</h3><p>Tente atualizar esta página.</p></div>
+      : visible.length === 0 ? <div className="op-empty"><span className="op-empty-symbol"><i className="pi pi-book" /></span><h3>{outlines.length ? 'Nenhum esboço encontrado' : 'Sua próxima mensagem começa aqui'}</h3><p>{outlines.length ? 'Experimente outra busca ou mude os filtros.' : 'Crie seu primeiro esboço e construa sua biblioteca de mensagens.'}</p><button onClick={() => outlines.length ? (setSearch(''), setFilter('all')) : navigate.goTo(routes.outlineNew)} className="op-primary-action">{outlines.length ? 'Limpar filtros' : 'Criar primeiro esboço'}</button></div>
+      : <div className={view === 'grid' ? 'op-outline-grid' : 'op-outline-list'}>{visible.map(item => <article className="op-outline-card" key={item.id}>
+        <div className="op-outline-card-top"><span className="op-outline-monogram"><i className="pi pi-bookmark" /></span><span className={`op-status-pill ${item.status === 'ready' ? 'ready' : 'draft'}`}><span />{item.status === 'ready' ? 'Pronto' : 'Rascunho'}</span></div>
+        <div className="op-outline-card-body"><span className="op-outline-category">{item.category || 'Sem categoria'}</span><h3><button onClick={() => openEditor(item)}>{item.title || 'Sem título'}</button></h3><p><i className="pi pi-book" /> {item.reference || 'Referência não informada'}</p></div>
+        <footer className="op-outline-card-footer"><span><i className="pi pi-clock" /> {dateLabel(item.updatedAt)}</span><div className="op-card-actions">
+          <button title="Editar esboço" aria-label={`Editar ${item.title}`} onClick={() => openEditor(item)}><i className="pi pi-pencil" /></button>
+          <button title="Visualizar esboço" aria-label={`Visualizar ${item.title}`} onClick={() => navigate.goToOutlinePreview(item.id)}><i className="pi pi-eye" /></button>
+          <button title="Modo pregação" aria-label={`Apresentar ${item.title}`} onClick={() => navigate.goToOutlinePreach(item.id)}><i className="pi pi-desktop" /></button>
+          <button className="danger" title="Excluir esboço" aria-label={`Excluir ${item.title}`} onClick={() => setDeleteTarget(item)}><i className="pi pi-trash" /></button>
+        </div></footer>
+      </article>)}</div>}
+    </section>
+    {deleteTarget && <div className="op-modal-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) setDeleteTarget(null); }}><section className="op-confirm-modal" role="alertdialog" aria-modal="true" aria-labelledby="op-delete-title" aria-describedby="op-delete-text"><span className="op-confirm-icon"><i className="pi pi-trash" /></span><h2 id="op-delete-title">Excluir este esboço?</h2><p id="op-delete-text">“{deleteTarget.title}” será removido do armazenamento atual. Esta ação não pode ser desfeita.</p>{deletion.isError && <p className="op-delete-error">Não foi possível excluir. Tente novamente.</p>}<div className="op-modal-actions"><button onClick={() => setDeleteTarget(null)}>Cancelar</button><button className="op-delete-confirm" disabled={deletion.isPending} onClick={() => deletion.mutate(deleteTarget.id)}>{deletion.isPending ? 'Excluindo...' : 'Sim, excluir'}</button></div></section></div>}
+  </main>;
 }

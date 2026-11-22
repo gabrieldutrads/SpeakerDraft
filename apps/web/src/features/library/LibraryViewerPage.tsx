@@ -1,4 +1,5 @@
 import { PageLayout, Card } from '@/app/layout';
+import { Button } from 'primereact/button';
 import { useTranslation } from 'react-i18next';
 import { useAppNavigate } from '@/app/router';
 
@@ -7,18 +8,48 @@ export function LibraryViewerPage() {
   const navigate = useAppNavigate();
 
   return (
-    <PageLayout
-      title={t('viewing', { name: 'Document' }) || 'Document Viewer'}
-      description="View and annotate documents"
-    >
-      <Card>
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4" aria-hidden="true">📄</div>
-          <h3 className="text-xl font-semibold text-primary mb-2">Document Viewer</h3>
-          <p className="text-secondary mb-6">PDF.js viewer with annotations coming soon.</p>
-          <button className="btn btn-secondary" onClick={() => navigate.goBack()}>Back</button>
-        </div>
-      </Card>
-    </PageLayout>
+    <div className="op-library-page-bg">
+      <PageLayout
+        title={t('viewing', {
+          defaultValue: 'Visualizador de Material',
+        })}
+        description={t('viewerDescription', {
+          defaultValue: 'Consulta e leitura de documentos da sua biblioteca pessoal',
+        })}
+        actions={
+          <Button
+            type="button"
+            label={t('back', { defaultValue: 'Voltar' })}
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            outlined
+            onClick={() => navigate.goBack()}
+          />
+        }
+      >
+        <Card className="op-glass-card">
+          <div className="library-viewer-placeholder">
+            <i className="pi pi-file-pdf library-viewer-icon" aria-hidden="true" />
+            <h2 className="library-viewer-title">
+              {t('viewerTitle', { defaultValue: 'Leitura de documento' })}
+            </h2>
+            <p className="library-viewer-description">
+              {t('viewerPending', {
+                defaultValue:
+                  'A renderização de documentos e anotações vinculadas será ativada assim que o serviço de arquivos estiver conectado.',
+              })}
+            </p>
+            <Button
+              type="button"
+              label={t('back', { defaultValue: 'Voltar' })}
+              icon="pi pi-arrow-left"
+              severity="secondary"
+              outlined
+              onClick={() => navigate.goBack()}
+            />
+          </div>
+        </Card>
+      </PageLayout>
+    </div>
   );
 }

@@ -18,39 +18,39 @@ import {
   // Actions
   Plus, Minus, Edit, Trash2, Download, Upload,
   Save, RefreshCw, RotateCcw, Maximize2, Minimize2,
-  Print, FileText as DocText, FilePdf, FileWord,
+  Printer, FileText as DocText, FileType2, FileType,
 
   // Bible specific
-  Cross, Sparkles, Flame, Dove, Crown, Anchor,
+  Cross, Sparkles, Flame, Bird, Crown, Anchor,
 
   // UI
   Check, CheckCircle, AlertCircle, Info, HelpCircle,
-  Lock, Unlock, Key, Shield, Bell as BellIcon,
+  Lock, Unlock, Key, Shield,
   Filter, SortAsc, SortDesc, Grid, List,
   MoreHorizontal, MoreVertical, ChevronsUpDown,
 
   // Playback/Preaching
-  Play, Pause, Stop, SkipBack, SkipForward,
+  Play, Pause, Square, SkipBack, SkipForward,
   FastForward, Rewind, Volume2, VolumeX,
   Timer, Clock, Target, Flag,
 
   // Typography
   Bold, Italic, Underline, Strikethrough, Code,
-  Heading1, Heading2, Heading3, List, ListOrdered,
+  Heading1, Heading2, Heading3, ListOrdered,
   Quote, AlignLeft, AlignCenter, AlignRight, AlignJustify,
   Link, Unlink, Image, Table, Highlighter,
 
   // Bible books
-  ScrollText, BookMark, BookCheck, BookHeart,
+  ScrollText, BookCheck, BookHeart,
 
   // Misc
-  Globe, Language, Translate, Hash,
+  Globe, Languages, Hash,
   Tag, Bookmark, BookmarkPlus, BookmarkMinus,
   History, Clock as HistoryClock, TrendingUp,
   Settings as Cog, Palette, Contrast,
   Sun as SunIcon, Moon as MoonIcon,
 
-  LucideIcon
+  type LucideIcon
 } from 'lucide-react';
 
 import { forwardRef, type SVGProps } from 'react';
@@ -163,16 +163,16 @@ const iconMap: Record<IconName, LucideIcon> = {
   'rotate-ccw': RotateCcw,
   'maximize': Maximize2,
   'minimize': Minimize2,
-  'print': Print,
+  'print': Printer,
   'doc-text': DocText,
-  'file-pdf': FilePdf,
-  'file-word': FileWord,
+  'file-pdf': FileType2,
+  'file-word': FileType,
 
   // Bible specific
   'cross': Cross,
   'sparkles': Sparkles,
   'flame': Flame,
-  'dove': Dove,
+  'dove': Bird,
   'crown': Crown,
   'anchor': Anchor,
 
@@ -186,7 +186,6 @@ const iconMap: Record<IconName, LucideIcon> = {
   'unlock': Unlock,
   'key': Key,
   'shield': Shield,
-  'bell': BellIcon,
   'filter': Filter,
   'sort-asc': SortAsc,
   'sort-desc': SortDesc,
@@ -199,7 +198,7 @@ const iconMap: Record<IconName, LucideIcon> = {
   // Playback/Preaching
   'play': Play,
   'pause': Pause,
-  'stop': Stop,
+  'stop': Square,
   'skip-back': SkipBack,
   'skip-forward': SkipForward,
   'fast-forward': FastForward,
@@ -220,7 +219,6 @@ const iconMap: Record<IconName, LucideIcon> = {
   'heading-1': Heading1,
   'heading-2': Heading2,
   'heading-3': Heading3,
-  'list': List,
   'list-ordered': ListOrdered,
   'quote': Quote,
   'align-left': AlignLeft,
@@ -235,14 +233,14 @@ const iconMap: Record<IconName, LucideIcon> = {
 
   // Bible books
   'scroll-text': ScrollText,
-  'book-mark': BookMark,
+  'book-mark': BookMarked,
   'book-check': BookCheck,
   'book-heart': BookHeart,
 
   // Misc
   'globe': Globe,
-  'language': Language,
-  'translate': Translate,
+  'language': Languages,
+  'translate': Languages,
   'hash': Hash,
   'tag': Tag,
   'bookmark': Bookmark,
@@ -259,7 +257,7 @@ const iconMap: Record<IconName, LucideIcon> = {
 };
 
 export const Icon = forwardRef<SVGSVGElement, IconProps>(
-  ({ name, size = 20, strokeWidth = 2, className = '', 'aria-label': ariaLabel, 'aria-hidden': ariaHidden = true, ...props }, ref) => {
+  ({ name, size = 20, strokeWidth = 2, className = '', 'aria-label': ariaLabel, 'aria-hidden': ariaHidden, ...props }, ref) => {
     const IconComponent = iconMap[name];
 
     if (!IconComponent) {
@@ -275,7 +273,7 @@ export const Icon = forwardRef<SVGSVGElement, IconProps>(
         strokeWidth={strokeWidth}
         className={className}
         aria-label={ariaLabel}
-        aria-hidden={ariaHidden}
+        aria-hidden={ariaHidden ?? !ariaLabel}
         {...props}
       />
     );

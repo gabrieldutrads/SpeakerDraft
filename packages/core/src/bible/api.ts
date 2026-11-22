@@ -5,7 +5,7 @@
  */
 
 import { findBibleBook, BIBLE_BOOKS } from './books';
-import type { BibleBook, ParsedBibleReference } from './types';
+import type { ParsedBibleReference } from './types';
 
 export interface BibleVerse {
   book_id: string;
@@ -59,213 +59,244 @@ export const TRANSLATIONS: Record<TranslationCode, { name: string; language: 'pt
   'rvr1960': { name: 'RVR1960', language: 'es', fullName: 'Reina Valera 1960' },
   'rvr1909': { name: 'RVR1909', language: 'es', fullName: 'Reina Valera 1909' },
   'lbla': { name: 'LBLA', language: 'es', fullName: 'La Biblia de las Américas' },
-  'pt': { name: 'PT', language: 'pt', fullName: 'Português (padrão)' },
+  'pt': { name: 'Bíblia Livre', language: 'pt', fullName: 'Bíblia Livre (português brasileiro)' },
 };
 
-const API_BASE = 'https://bible-api.com';
-const CACHE_TTL = 1000 * 60 * 60 * 24; // 24 hours
 
-interface CacheEntry<T> {
-  data: T;
-  timestamp: number;
+/**
+ * Fontes: bible.helloao.org (Bíblia Livre PT, após checar metadados/licença)
+ * e bible-api.com (somente KJV). Não confundir NVI/ARA/NTLH com texto livre.
+ * A aplicação deve exibir o crédito/licença da tradução antes da publicação.
+ */
+const AO_BASE = 'https://bible.helloao.org/api';
+const LEGACY_BASE = 'https://bible-api.com';
+const CACHE_TTL = 24 * 60 * 60 * 1000;
+
+// IDs USFM/OSIS dos 66 livros. Não usar abreviações PT na URL da API.
+const BOOK_IDS = [
+  'GEN','EXO','LEV','NUM','DEU','JOS','JDG','RUT','1SA','2SA','1KI','2KI',
+  '1CH','2CH','EZR','NEH','EST','JOB','PSA','PRO','ECC','SNG','ISA','JER',
+  'LAM','EZK','DAN','HOS','JOL','AMO','OBA','JON','MIC','NAM','HAB','ZEP',
+  'HAG','ZEC','MAL','MAT','MRK','LUK','JHN','ACT','ROM','1CO','2CO','GAL',
+  'EPH','PHP','COL','1TH','2TH','1TI','2TI','TIT','PHM','HEB','JAS','1PE',
+  '2PE','1JN','2JN','3JN','JUD','REV',
+] as const;
+
+const EN_BOOK_NAMES = [
+  'Genesis','Exodus','Leviticus','Numbers','Deuteronomy','Joshua','Judges','Ruth',
+  '1 Samuel','2 Samuel','1 Kings','2 Kings','1 Chronicles','2 Chronicles','Ezra',
+  'Nehemiah','Esther','Job','Psalms','Proverbs','Ecclesiastes','Song of Solomon',
+  'Isaiah','Jeremiah','Lamentations','Ezekiel','Daniel','Hosea','Joel','Amos',
+  'Obadiah','Jonah','Micah','Nahum','Habakkuk','Zephaniah','Haggai','Zechariah',
+  'Malachi','Matthew','Mark','Luke','John','Acts','Romans','1 Corinthians',
+  '2 Corinthians','Galatians','Ephesians','Philippians','Colossians',
+  '1 Thessalonians','2 Thessalonians','1 Timothy','2 Timothy','Titus','Philemon',
+  'Hebrews','James','1 Peter','2 Peter','1 John','2 John','3 John','Jude','Revelation',
+] as const;
+
+interface AoTranslation {
+  id: string;
+  name: string;
+  language: string;
+  licenseUrl?: string;
+  licenseNotice?: string | null;
+  license?: { commercialUse?: string; attribution?: string; publicDomain?: boolean } | null;
+  numberOfBooks?: number;
+}
+interface AoChapter {
+  chapter?: {
+    content?: Array<{ type: string; number?: number; text?: string }>;
+  };
+}
+interface LegacyResponse {
+  verses?: Array<{ verse?: number; text?: string }>;
 }
 
-class BibleApiService {
-  private cache = new Map<string, CacheEntry<any>>();
-  private defaultTranslation: TranslationCode = 'nvi';
-  private pendingRequests = new Map<string, Promise<any>>();
+const readJson = async <T>(url: string): Promise<T> => {
+  let response: Response;
+  try {
+    response = await fetch(url);
+  } catch {
+    throw new Error('Não foi possível acessar o serviço bíblico. Verifique a conexão e tente novamente.');
+  }
+  if (!response.ok) {
+    throw new Error(`O provedor bíblico não respondeu corretamente (HTTP ${response.status}).`);
+  }
+  return (await response.json()) as T;
+};
 
-  setDefaultTranslation(translation: TranslationCode) {
+class BibleApiService {
+  private cache = new Map<string, { data: unknown; timestamp: number }>();
+  private pendingRequests = new Map<string, Promise<unknown>>();
+  private defaultTranslation: TranslationCode = 'pt';
+  private portugueseTranslation: Promise<AoTranslation> | null = null;
+
+  setDefaultTranslation(translation: TranslationCode): void {
     this.defaultTranslation = translation;
   }
 
-  getDefaultTranslation(): TranslationCode {
-    return this.defaultTranslation;
-  }
+  getDefaultTranslation(): TranslationCode { return this.defaultTranslation; }
 
-  private getCacheKey(endpoint: string, params: Record<string, string> = {}): string {
-    const searchParams = new URLSearchParams(params).toString();
-    return `${endpoint}?${searchParams}`;
-  }
-
-  private getFromCache<T>(key: string): T | null {
+  private cached<T>(key: string, loader: () => Promise<T>): Promise<T> {
     const entry = this.cache.get(key);
-    if (!entry) return null;
-    if (Date.now() - entry.timestamp > CACHE_TTL) {
-      this.cache.delete(key);
-      return null;
+    if (entry && Date.now() - entry.timestamp < CACHE_TTL) {
+      return Promise.resolve(entry.data as T);
     }
-    return entry.data as T;
-  }
-
-  private setCache<T>(key: string, data: T): void {
-    this.cache.set(key, { data, timestamp: Date.now() });
-  }
-
-  private async fetchWithCache<T>(url: string, cacheKey: string): Promise<T> {
-    const cached = this.getFromCache<T>(cacheKey);
-    if (cached) return cached;
-
-    // Deduplicate concurrent requests for the same resource
-    if (this.pendingRequests.has(cacheKey)) {
-      return this.pendingRequests.get(cacheKey) as Promise<T>;
-    }
-
-    const promise = fetch(url)
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error(`Bible API error: ${response.status} ${response.statusText}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        this.setCache(cacheKey, data);
-        this.pendingRequests.delete(cacheKey);
-        return data as T;
-      })
-      .catch((error) => {
-        this.pendingRequests.delete(cacheKey);
-        throw error;
-      });
-
-    this.pendingRequests.set(cacheKey, promise);
+    const pending = this.pendingRequests.get(key);
+    if (pending) return pending as Promise<T>;
+    const promise = loader().then(data => {
+      this.cache.set(key, { data, timestamp: Date.now() });
+      return data;
+    }).finally(() => this.pendingRequests.delete(key));
+    this.pendingRequests.set(key, promise);
     return promise;
   }
 
-  /**
-   * Get a full chapter with all verses
-   */
-  async getChapter(
-    bookId: number | string,
-    chapter: number,
-    translation?: TranslationCode
-  ): Promise<BibleChapter> {
-    const book = typeof bookId === 'number' ? BIBLE_BOOKS.find(b => b.id === bookId) : findBibleBook(bookId);
-    if (!book) throw new Error(`Book not found: ${bookId}`);
-
-    const t = translation || this.defaultTranslation;
-    const cacheKey = this.getCacheKey('chapter', { book: book.abbrev, chapter: chapter.toString(), translation: t });
-    const url = `${API_BASE}/${book.abbrev}+${chapter}?translation=${t}`;
-
-    return this.fetchWithCache<BibleChapter>(url, cacheKey);
+  private getPortugueseTranslation(): Promise<AoTranslation> {
+    if (!this.portugueseTranslation) {
+      this.portugueseTranslation = readJson<{ translations: AoTranslation[] }>(
+        `${AO_BASE}/available_translations.json`,
+      ).then(({ translations }) => {
+        // Não selecionar uma tradução portuguesa aleatória e rotulá-la como Bíblia Livre.
+        // A Bíblia Livre (edição de fevereiro de 2018) é licenciada sob
+        // Creative Commons Attribution 4.0 Brasil, conforme a fonte original:
+        // https://ebible.org/Bible/details.php?id=porbr2018
+        // O catálogo pode omitir o objeto `license` ou usar ID normalizado.
+        // Identificar a tradução pela referência à MESMA edição, nunca por
+        // ser simplesmente uma tradução em português.
+        const bibleLivre = translations.find(item => {
+          const id = item.id.toLowerCase().replace(/[^a-z0-9]/g, '');
+          const licenseUrl = (item.licenseUrl || '').toLowerCase();
+          return (id === 'porbr2018' || licenseUrl.includes('porbr2018'))
+            && item.language === 'por'
+            && (item.numberOfBooks ?? 0) >= 66;
+        });
+        if (!bibleLivre) {
+          const portugueseIds = translations
+            .filter(item => item.language === 'por')
+            .map(item => item.id)
+            .slice(0, 15)
+            .join(', ');
+          throw new Error(
+            'A edição Bíblia Livre (porbr2018) não foi localizada no catálogo deste provedor.'
+            + (portugueseIds ? ` Versões portuguesas disponíveis: ${portugueseIds}.` : ''),
+          );
+        }
+        return bibleLivre;
+      }).catch(error => {
+        this.portugueseTranslation = null;
+        throw error;
+      });
+    }
+    return this.portugueseTranslation;
   }
 
-  /**
-   * Get a specific verse or verse range
-   */
+  /** Crédito que deve ser exibido na UI para atender a licença da versão portuguesa. */
+  async getPortugueseAttribution(): Promise<{ name: string; notice: string; licenseUrl: string }> {
+    const version = await this.getPortugueseTranslation();
+    return {
+      name: version.name,
+      notice: version.licenseNotice || 'Bíblia Livre (2018) — Diego Santos, Mario Sérgio e Marco Teles. CC BY 4.0 Brasil.',
+      licenseUrl: version.licenseUrl || 'https://creativecommons.org/licenses/by/4.0/br/',
+    };
+  }
+
+  private getBook(bookId: number | string) {
+    const book = typeof bookId === 'number'
+      ? BIBLE_BOOKS.find(item => item.id === bookId)
+      : findBibleBook(bookId);
+    if (!book) throw new Error(`Livro bíblico não encontrado: ${bookId}`);
+    return book;
+  }
+
+  async getChapter(bookId: number | string, chapter: number, translation?: TranslationCode): Promise<BibleChapter> {
+    const book = this.getBook(bookId);
+    if (!Number.isInteger(chapter) || chapter < 1 || chapter > book.chapters) {
+      throw new Error('Capítulo bíblico inválido.');
+    }
+    const version = translation || this.defaultTranslation;
+    const reference = `${book.name} ${chapter}`;
+    const makeVerse = (number: number, text: string): BibleVerse => ({
+      book_id: book.abbrev, book_name: book.name, chapter, verse: number, text,
+    });
+    if (version === 'pt') {
+      const selected = await this.getPortugueseTranslation();
+      const osis = BOOK_IDS[book.id - 1];
+      return this.cached(`ao:${selected.id}:${osis}:${chapter}`, async () => {
+        const data = await readJson<AoChapter>(
+          `${AO_BASE}/${encodeURIComponent(selected.id)}/${osis}/${chapter}.simple.json`,
+        );
+        const verses = (data.chapter?.content || [])
+          .filter(v => v.type === 'verse' && typeof v.number === 'number' && typeof v.text === 'string')
+          .map(v => makeVerse(v.number!, v.text!));
+        if (!verses.length) throw new Error('O capítulo retornou vazio ou em formato desconhecido.');
+        return { book_id: book.abbrev, book_name: book.name, chapter, verses, reference, verses_count: verses.length };
+      });
+    }
+    if (version === 'kjv') {
+      return this.cached(`legacy:kjv:${book.id}:${chapter}`, async () => {
+        const englishBook = EN_BOOK_NAMES[book.id - 1];
+        const result = await readJson<LegacyResponse>(
+          `${LEGACY_BASE}/${encodeURIComponent(`${englishBook} ${chapter}`)}?translation=kjv`,
+        );
+        const verses = (result.verses || [])
+          .filter(v => typeof v.verse === 'number' && typeof v.text === 'string')
+          .map(v => makeVerse(v.verse!, v.text!));
+        if (!verses.length) throw new Error('O capítulo retornou vazio.');
+        return { book_id: book.abbrev, book_name: book.name, chapter, verses, reference, verses_count: verses.length };
+      });
+    }
+    throw new Error(`A tradução ${TRANSLATIONS[version]?.name || version} não está integrada ou licenciada. Selecione Bíblia Livre (PT) ou KJV.`);
+  }
+
   async getVerses(
-    bookId: number | string,
-    chapter: number,
-    verseStart?: number,
-    verseEnd?: number,
-    translation?: TranslationCode
+    bookId: number | string, chapter: number, verseStart?: number, verseEnd?: number,
+    translation?: TranslationCode,
   ): Promise<BibleVerse | BibleVerse[]> {
-    const book = typeof bookId === 'number' ? BIBLE_BOOKS.find(b => b.id === bookId) : findBibleBook(bookId);
-    if (!book) throw new Error(`Book not found: ${bookId}`);
-
-    const t = translation || this.defaultTranslation;
-    let reference = `${book.abbrev}+${chapter}`;
-    if (verseStart) {
-      reference += `:${verseStart}`;
-      if (verseEnd && verseEnd !== verseStart) {
-        reference += `-${verseEnd}`;
-      }
-    }
-
-    const cacheKey = this.getCacheKey('verses', { reference, translation: t });
-    const url = `${API_BASE}/${reference}?translation=${t}`;
-
-    return this.fetchWithCache<BibleVerse | BibleVerse[]>(url, cacheKey);
+    const data = await this.getChapter(bookId, chapter, translation);
+    if (verseStart === undefined) return data.verses;
+    const verses = data.verses.filter(v => v.verse >= verseStart && v.verse <= (verseEnd ?? verseStart));
+    if (verses.length === 0) throw new Error('Versículo não encontrado neste capítulo.');
+    return verseEnd !== undefined && verseEnd !== verseStart ? verses : verses[0];
   }
 
-  /**
-   * Get passage using parsed reference
-   */
   async getPassage(ref: ParsedBibleReference, translation?: TranslationCode): Promise<BibleChapter | BibleVerse | BibleVerse[]> {
-    if (ref.verseStart === undefined) {
-      return this.getChapter(ref.bookId, ref.chapterStart, translation);
-    }
+    if (ref.verseStart === undefined) return this.getChapter(ref.bookId, ref.chapterStart, translation);
     return this.getVerses(ref.bookId, ref.chapterStart, ref.verseStart, ref.verseEnd, translation);
   }
 
-  /**
-   * Search for verses containing text
-   */
-  async search(query: string, translation?: TranslationCode, limit = 50): Promise<BibleSearchResponse> {
-    const t = translation || this.defaultTranslation;
-    const cacheKey = this.getCacheKey('search', { query, translation: t, limit: limit.toString() });
-    const url = `${API_BASE}/search/${encodeURIComponent(query)}?translation=${t}&limit=${limit}`;
-
-    return this.fetchWithCache<BibleSearchResponse>(url, cacheKey);
+  async search(_query: string, _translation?: TranslationCode, _limit = 50): Promise<BibleSearchResponse> {
+    // Nenhum desses provedores possui o endpoint /search/... usado anteriormente.
+    // Não forjar resultados nem fazer 1.189 solicitações no navegador.
+    throw new Error('Busca por palavras ainda não está disponível neste provedor. Use a busca por referência bíblica.');
   }
 
-  /**
-   * Get random verse
-   */
   async getRandomVerse(translation?: TranslationCode): Promise<BibleVerse> {
-    const t = translation || this.defaultTranslation;
-    const cacheKey = this.getCacheKey('random', { translation: t });
-    const url = `${API_BASE}/random?translation=${t}`;
-
-    return this.fetchWithCache<BibleVerse>(url, cacheKey);
+    const book = BIBLE_BOOKS[Math.floor(Math.random() * BIBLE_BOOKS.length)];
+    const chapter = Math.floor(Math.random() * book.chapters) + 1;
+    const data = await this.getChapter(book.id, chapter, translation);
+    return data.verses[Math.floor(Math.random() * data.verses.length)];
   }
 
-  /**
-   * Get all available books with chapter counts for a translation
-   */
-  async getBooks(translation?: TranslationCode): Promise<{ books: Array<{ name: string; chapters: number }> }> {
-    const t = translation || this.defaultTranslation;
-    const cacheKey = this.getCacheKey('books', { translation: t });
-    const url = `${API_BASE}/books?translation=${t}`;
-
-    return this.fetchWithCache(url, cacheKey);
+  async getBooks(_translation?: TranslationCode): Promise<{ books: Array<{ name: string; chapters: number }> }> {
+    return { books: BIBLE_BOOKS.map(book => ({ name: book.name, chapters: book.chapters })) };
   }
 
-  /**
-   * Clear cache (useful for testing or translation changes)
-   */
   clearCache(): void {
     this.cache.clear();
     this.pendingRequests.clear();
+    this.portugueseTranslation = null;
   }
 
-  /**
-   * Preload common chapters for offline-first experience
-   */
   async preloadCommonPassages(translation?: TranslationCode): Promise<void> {
-    const commonPassages = [
-      { book: 'jo', chapter: 3 },    // John 3
-      { book: 'sl', chapter: 23 },   // Psalm 23
-      { book: 'rm', chapter: 8 },    // Romans 8
-      { book: 'fp', chapter: 4 },    // Philippians 4
-      { book: 'is', chapter: 53 },   // Isaiah 53
-      { book: 'mt', chapter: 5 },    // Matthew 5 (Sermon on Mount)
-      { book: '1co', chapter: 13 },  // 1 Corinthians 13
-      { book: 'hb', chapter: 11 },   // Hebrews 11
-      { book: 'gn', chapter: 1 },    // Genesis 1
-      { book: 'ap', chapter: 21 },   // Revelation 21
-    ];
-
-    await Promise.allSettled(
-      commonPassages.map(({ book, chapter }) => this.getChapter(book, chapter, translation))
-    );
+    await Promise.allSettled([[43,3],[19,23],[45,8],[50,4],[23,53],[40,5],[46,13],[58,11],[1,1],[66,21]]
+      .map(([book, chapter]) => this.getChapter(book, chapter, translation)));
   }
 }
 
-// Singleton instance
 export const bibleApi = new BibleApiService();
-
-// Helper to get translation display name
-export function getTranslationDisplayName(code: TranslationCode): string {
-  return TRANSLATIONS[code]?.name || code.toUpperCase();
-}
-
-export function getTranslationFullName(code: TranslationCode): string {
-  return TRANSLATIONS[code]?.fullName || code.toUpperCase();
-}
-
+export function getTranslationDisplayName(code: TranslationCode): string { return TRANSLATIONS[code]?.name || code.toUpperCase(); }
+export function getTranslationFullName(code: TranslationCode): string { return TRANSLATIONS[code]?.fullName || code.toUpperCase(); }
 export function getTranslationsByLanguage(language: 'pt' | 'en' | 'es'): TranslationCode[] {
-  return Object.entries(TRANSLATIONS)
-    .filter(([, v]) => v.language === language)
-    .map(([k]) => k as TranslationCode);
+  return language === 'pt' ? ['pt'] : language === 'en' ? ['kjv'] : [];
 }

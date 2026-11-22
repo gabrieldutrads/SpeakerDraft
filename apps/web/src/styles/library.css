@@ -1,0 +1,312 @@
+/* ============================================================================
+   oPregador — Biblioteca Pessoal (Glassmorphism + Modern UI)
+   ============================================================================ */
+
+:root {
+    /* Cores da Marca */
+    --op-marfim: #F7F4ED;
+    --op-azul: #17243A;
+    --op-dourado: #C9A86A;
+    --op-verde: #527568;
+    --op-grafite: #252A32;
+
+    /* Texto */
+    --text-main: var(--op-azul);
+    --text-muted: rgba(37, 42, 50, 0.7);
+    --text-light: var(--op-marfim);
+
+    /* Efeitos de Vidro */
+    --glass-bg: rgba(247, 244, 237, 0.65);
+    --glass-border: rgba(255, 255, 255, 0.6);
+    --glass-shadow: 0 8px 32px rgba(23, 36, 58, 0.08);
+    --glass-blur: blur(16px) saturate(180%);
+}
+
+/* ============================================================================
+   1. Fundo da Página (Opcional, caso o PageLayout não tenha)
+   ============================================================================ */
+.op-library-page-bg {
+    background: linear-gradient(135deg, #F7F4ED 0%, #E8E4D9 100%);
+    min-height: 100vh;
+    padding: 2rem;
+    border-radius: 24px;
+    /* Suaviza as bordas do container principal */
+}
+
+/* ============================================================================
+   2. Superfície de Vidro (Substitui o Card padrão)
+   ============================================================================ */
+.op-glass-card {
+    background-color: var(--glass-bg) !important;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 20px !important;
+    box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+    padding: 2rem !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.op-glass-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(23, 36, 58, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+/* ============================================================================
+   3. Barra de Ferramentas (Busca)
+   ============================================================================ */
+.library-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    padding: 1rem 1.5rem;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(10px);
+    border-radius: 100px;
+    border: 1px solid rgba(201, 168, 106, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.library-search {
+    width: 100%;
+    max-width: 400px;
+}
+
+.library-search .p-inputtext {
+    width: 100%;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+.library-search .p-inputtext::placeholder {
+    color: var(--text-muted);
+}
+
+.library-search .p-input-icon-left>i {
+    color: var(--op-dourado);
+}
+
+/* ============================================================================
+   4. Estado Vazio (Empty State)
+   ============================================================================ */
+.library-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4rem 2rem;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 16px;
+    border: 1px dashed rgba(201, 168, 106, 0.4);
+}
+
+.library-empty-icon {
+    font-size: 3.5rem;
+    color: var(--op-dourado);
+    margin-bottom: 1rem;
+    opacity: 0.8;
+}
+
+.library-empty-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--op-azul);
+    margin-bottom: 0.5rem;
+}
+
+.library-empty-description {
+    color: var(--text-muted);
+    max-width: 400px;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+/* ============================================================================
+   5. Lista de Itens da Biblioteca
+   ============================================================================ */
+.library-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.library-list-item {
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.library-list-item:hover {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: var(--op-dourado);
+}
+
+.library-list-button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+}
+
+.library-list-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--op-azul);
+}
+
+.library-list-meta {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--op-verde);
+    background: rgba(82, 117, 104, 0.1);
+    padding: 0.25rem 0.75rem;
+    border-radius: 100px;
+}
+
+/* ============================================================================
+   6. Formulário de Upload
+   ============================================================================ */
+.library-upload-form {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.library-upload-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.library-upload-label {
+    font-weight: 600;
+    color: var(--op-azul);
+    font-size: 0.95rem;
+}
+
+.library-upload-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .library-upload-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.library-file-input {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.4);
+    border: 2px dashed rgba(201, 168, 106, 0.5);
+    border-radius: 12px;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: border-color 0.2s ease;
+}
+
+.library-file-input:hover {
+    border-color: var(--op-dourado);
+}
+
+.library-file-summary {
+    font-size: 0.85rem;
+    color: var(--op-verde);
+    margin-top: 0.5rem;
+    font-weight: 500;
+}
+
+.library-upload-status {
+    padding: 1rem;
+    background: rgba(201, 168, 106, 0.15);
+    border-left: 4px solid var(--op-dourado);
+    border-radius: 8px;
+    color: var(--op-azul);
+    font-weight: 500;
+}
+
+.library-upload-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(23, 36, 58, 0.1);
+}
+
+/* ============================================================================
+   7. Visualizador (Viewer)
+   ============================================================================ */
+.library-viewer-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 5rem 2rem;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 16px;
+}
+
+.library-viewer-icon {
+    font-size: 4rem;
+    color: var(--op-azul);
+    opacity: 0.2;
+    margin-bottom: 1.5rem;
+}
+
+.library-viewer-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--op-azul);
+    margin-bottom: 1rem;
+}
+
+.library-viewer-description {
+    color: var(--text-muted);
+    max-width: 500px;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+/* ============================================================================
+   8. Fallbacks de Acessibilidade
+   ============================================================================ */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+
+    .op-glass-card,
+    .library-toolbar,
+    .library-list-item {
+        background: var(--op-marfim);
+        border: 1px solid rgba(37, 42, 50, 0.1);
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+
+    .op-glass-card,
+    .library-toolbar,
+    .library-list-item,
+    .library-empty-state {
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        background: var(--op-marfim);
+    }
+}

@@ -141,6 +141,7 @@ const resources = {
         title: 'Título do esboço',
         placeholder: 'Comece a escrever seu esboço...',
         blocks: {
+          title: 'Blocos de Pregação',
           heading: 'Título',
           subheading: 'Subtítulo',
           paragraph: 'Parágrafo',
@@ -209,9 +210,6 @@ const resources = {
         addTag: 'Adicionar tag...',
         bibleReferences: 'Referências Bíblicas',
         addBibleRef: 'Ex: João 3:16',
-        blocks: {
-          title: 'Blocos de Pregação',
-        },
       },
 
       // Preaching Mode
@@ -686,6 +684,7 @@ const resources = {
         title: 'Outline Title',
         placeholder: 'Start writing your outline...',
         blocks: {
+          title: 'Sermon Blocks',
           heading: 'Heading',
           subheading: 'Subheading',
           paragraph: 'Paragraph',
@@ -754,13 +753,38 @@ const resources = {
         addTag: 'Add tag...',
         bibleReferences: 'Bible References',
         addBibleRef: 'Ex: John 3:16',
-        blocks: {
-          title: 'Sermon Blocks',
-        },
       },
     },
   },
 };
+
+/**
+ * Compatibilidade entre as chamadas useTranslation('bible'/'agenda'/...)
+ * e os recursos legados agrupados em translation.
+ * Não duplica nem substitui as mensagens originais.
+ */
+const namespacedResources = Object.fromEntries(
+  Object.entries(resources).map(([language, bundle]) => {
+    const base = bundle.translation as Record<string, unknown>;
+    const namespaces: Record<string, Record<string, unknown>> = { translation: base };
+    for (const [name, entries] of Object.entries(base)) {
+      if (entries !== null && typeof entries === 'object' && !Array.isArray(entries)) {
+        const values = entries as Record<string, unknown>;
+        namespaces[name] = {
+          ...values,
+          // Compatibilidade com páginas que usam t('bible.title') em useTranslation('bible').
+          [name]: values,
+          common: base.common,
+          settings: base.settings,
+          preaching: base.preaching,
+          editor: base.editor,
+          status: (base.outlines as { status?: unknown } | undefined)?.status,
+        };
+      }
+    }
+    return [language, namespaces];
+  })
+);
 
 /* ==========================================================================
    i18n Configuration
@@ -770,7 +794,8 @@ i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    resources,
+    resources: namespacedResources,
+    defaultNS: 'translation',
     fallbackLng: 'pt',
     lng: 'pt', // Default language
     supportedLngs: ['pt', 'en'],
