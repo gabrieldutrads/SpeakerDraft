@@ -4,9 +4,8 @@
     "jsx": "react-jsx",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["vite/client"],
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
+      "@/*": ["./src/*"],
       "@speaker-draft/core/*": ["../../packages/core/src/*"],
       "@speaker-draft/data/*": ["../../packages/data/src/*"],
       "@speaker-draft/design-tokens/*": ["../../packages/design-tokens/src/*"],

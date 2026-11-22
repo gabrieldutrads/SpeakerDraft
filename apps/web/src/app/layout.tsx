@@ -172,7 +172,7 @@ function DesktopSidebar() {
   return (
     <aside
       className={cn(
-        'fixed top-0 left-0 z-30 h-full transition-all duration-300 bg-sidebar border-r border-border flex flex-col',
+        'fixed top-0 left-0 z-30 h-full transition-all duration-300 bg-sidebar border-r border-border hidden lg:flex flex-col',
         collapsed ? 'w-16' : 'w-64'
       )}
       aria-label="Main navigation"
